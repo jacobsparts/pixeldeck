@@ -14,9 +14,9 @@ grey paper, no framing.
 ![the batch editor holding four raw photographs, each shown at its original
 size](docs/photo-box-before.png)
 
-The same four after Exposure Fusion and the Photo Box routine, which runs
-auto-crop, background removal, a crop to the subject and a resize to 2048 in
-one go:
+The same four after the Photo Box routine — auto-crop, background removal, a
+crop to the subject and a resize to 2048 — and then exposure fusion, which
+evens out the light and drops them all onto white:
 
 ![the same four photographs cut out, straightened and resized to
 2048x2048](docs/photo-box-after.png)

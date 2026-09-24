@@ -1,0 +1,18 @@
+{
+  "gemini": {
+    "api_key": ""
+  },
+  "openai": {
+    "api_key": ""
+  },
+  "pixian": {
+    "username": "",
+    "password": ""
+  },
+  "replicate": {
+    "api_token": ""
+  },
+  "ailabtools": {
+    "api_key": ""
+  }
+}

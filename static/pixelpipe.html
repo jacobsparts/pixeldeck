@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0">
+<title>Pixel Pipe</title>
+<link rel="icon" href="pixeldeck.svg">
+<link rel="stylesheet" href="pixeldeck-editor.css">
+<style>
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f0f0f0; }
+a:link, a:visited { color: #444; text-decoration: none; }
+a:hover { color: #3af; }
+
+/* Menu bar */
+.menubar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.125rem;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        padding: 0 0.125rem;
+        min-height: 2rem;
+        font-size: 0.8125rem;
+        user-select: none;
+        position: relative;
+}
+.menubar.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+}
+.menubar .sep {
+        width: 1px;
+        height: 1.25rem;
+        background: #ddd;
+        margin: 0 0.25rem;
+}
+.menubar input[type="text"] {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.125rem 0.5rem;
+        font-size: 0.8125rem;
+        width: 6.5rem;
+        height: 1.5rem;
+        outline: none;
+}
+.menubar input[type="text"]:focus {
+        border-color: #007aff;
+}
+.thumb-card img.queued {
+        outline: 2px solid #f5a400;
+        outline-offset: -2px;
+        opacity: 0.75;
+}
+.thumb-card img.processing {
+        outline: 2px solid #007aff;
+        outline-offset: -2px;
+        opacity: 0.6;
+}
+.thumb-card img.busy {
+        outline: 2px solid #007aff;
+        outline-offset: -2px;
+        opacity: 0.6;
+}
+.thumb-card img.error {
+        outline: 2px solid #ff3b30;
+        outline-offset: -2px;
+}
+
+/* Main content */
+#main {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+}
+#main.editor-active {
+        opacity: 0;
+        pointer-events: none;
+}
+
+#thumbs {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0.375rem;
+}
+.thumb-card {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+}
+.thumb-card img {
+        width: 210px;
+        height: 210px;
+        object-fit: contain;
+        border-radius: 4px;
+        cursor: pointer;
+        background-image: linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(-45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(-45deg, transparent 75%, #ddd 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+        background-color: #eee;
+}
+.thumb-card input[type="checkbox"] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+        width: 26px;
+        height: 26px;
+        margin: 0;
+        opacity: 0.6;
+}
+.thumb-dim {
+        position: absolute;
+        left: 2px;
+        bottom: calc(1.5rem + 2px);
+        color: #333;
+        background: rgba(255, 255, 255, 0.75);
+        font-size: 0.75rem;
+        line-height: 1;
+        pointer-events: none;
+}
+.thumb-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1;
+}
+.thumb-controls a {
+        cursor: pointer;
+        color: #888;
+}
+.thumb-controls a:hover {
+        color: #333;
+}
+.thumb-card.dragging {
+        opacity: 0.4;
+}
+.thumb-card {
+        cursor: grab;
+}
+.thumb-card:active {
+        cursor: grabbing;
+}
+
+.image-editor {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        opacity: 0;
+        pointer-events: none;
+}
+.image-editor.editor-active {
+        opacity: 1;
+        pointer-events: auto;
+}
+</style>
+<script src="vue.global.prod.js"></script>
+<script src="jszip.min.js"></script>
+<script src="../plugins.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import { pixeldeckEditor } from './pixeldeck-editor.js';
+import { dropdownMenu } from './dropdown-menu.js';
+
+class EventBus {
+  constructor() {
+    this.listeners = new Map();
+  }
+
+  addEventListener(type, callback) {
+    if (!this.listeners.has(type)) {
+      this.listeners.set(type, []);
+    }
+    this.listeners.get(type).push(callback);
+  }
+
+  removeEventListener(type, callback) {
+    if (this.listeners.has(type)) {
+      const callbacks = this.listeners.get(type);
+      const index = callbacks.indexOf(callback);
+      if (index !== -1) {
+        callbacks.splice(index, 1);
+      }
+    }
+  }
+
+  dispatchEvent(event) {
+    if (this.listeners.has(event.type)) {
+      const callbacks = this.listeners.get(event.type);
+      for (const callback of callbacks) {
+        callback.call(this, event);
+      }
+    }
+  }
+
+  async broadcast(detail, concurrency = Infinity){
+          const event = new CustomEvent('broadcast', {detail});
+          const callbacks = this.listeners.get('broadcast') || [];
+          const queue = callbacks.slice();
+          const workers = Array.from({length: Math.min(concurrency, queue.length)}, async () => {
+                  while(queue.length){
+                          const callback = queue.shift();
+                          await callback.call(this, event);
+                  }
+          });
+          await Promise.all(workers);
+  }
+}
+const eventBus = new EventBus();
+
+const app = {
+        setup(){
+                return { eventBus };
+        },
+        data(){ return {
+                images: [],
+                thumbnailSize: 210,
+                thumbnailQueue: [],
+                activeThumbnails: 0,
+                thumbnailConcurrency: 4,
+                batchConcurrency: 4,
+                batchActive: false,
+                batchCancelRequested: false,
+                batchAbortRequested: false,
+                batchSettleMs: 50,
+                thumbnailPlaceholder: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="210" height="210" viewBox="0 0 210 210"%3E%3Crect width="210" height="210" fill="%23eee"/%3E%3Ctext x="105" y="105" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="14" fill="%23999"%3ELoading%3C/text%3E%3C/svg%3E',
+                selected: null,
+                imageid: 0,
+                schema: null,
+                dragIndex: null,
+                dragOverIndex: null,
+                showPane: false,
+                paneFields: null,
+                paneProvider: '',
+                paneApp: '',
+                pluginComponents: [],
+                options: {},
+        }},
+        components: { 'pixeldeck-editor': pixeldeckEditor, 'dropdown-menu': dropdownMenu },
+                async created(){
+                fetch('../schema').then(r=>r.json()).then(json=>{ this.schema = json; });
+                const params = new URLSearchParams(window.location.search);
+                if(window.location.search){
+                        let urls = params.get("urls");
+                        if(urls){
+                                urls = JSON.parse(urls);
+                                this.load_urls(urls);
+                        }
+                }
+                const savedConcurrency = localStorage.getItem('pixelpipe_concurrency') || params.get("concurrency");
+                if(savedConcurrency){
+                        const parsed = parseInt(savedConcurrency, 10);
+                        if(!isNaN(parsed) && parsed > 0){
+                                this.batchConcurrency = parsed;
+                                this.thumbnailConcurrency = Math.max(4, parsed);
+                        }
+                }
+        },
+        computed: {
+                anyBusy(){
+                        return this.images.some(img => img.busy);
+                },
+                gridBusy(){
+                        return this.batchActive || this.images.some(img => img.queued || img.processing || img.gridBusy);
+                },
+
+                hasQueuedBatch(){
+                        return this.images.some(img => img.queued);
+                },
+                batchCancelLabel(){
+                        return this.hasQueuedBatch && !this.batchCancelRequested ? 'Clear Queue' : 'Cancel';
+                },
+                appMenus(){
+                        if(!this.schema) return [];
+                        return Object.entries(this.schema)
+                                .filter(([app]) => !app.toLowerCase().includes('inpainting'))
+                                .map(([app, providers]) => {
+                                        const models = [];
+                                        for(const [provider, s] of Object.entries(providers)){
+                                                for(const model of s.model.options){
+                                                        models.push({model, provider});
+                                                }
+                                        }
+                                        return { app, models };
+                                });
+                },
+                photoBoxOptions(){
+                        return [
+                                {text: 'Single Item', fn: () => this.batchBroadcast(['photoBoxMacro', 'Single Item'])},
+                                {text: 'Kit / Multi-Item', fn: () => this.batchBroadcast(['photoBoxMacro', 'Kit / Multi-Item'])},
+                                {text: 'Light Item', fn: () => this.batchBroadcast(['photoBoxMacro', 'Light Item'])},
+                        ];
+                },
+                resizeOptions(){
+                        const sizes = [512, 768, 1024, 2048];
+                        return [
+                                ...sizes.map(s => ({text: `Resize ${s}×${s}`, fn: () => this.batchBroadcast(['resize',s])})),
+                                ...sizes.map(s => ({text: `Resize ${s} long edge`, fn: () => this.batchBroadcast(['resizeLongEdge',s])})),
+                        ];
+                },
+                concurrencyOptions(){
+                        const presets = [1, 2, 3, 4, 6, 8, 12, 16];
+                        return [
+                                ...presets.map(n => ({text: `${n}${n === 4 ? ' (Default)' : ''}`, value: n})),
+                                {text: 'Custom...', value: 'custom'},
+                        ];
+                },
+        },
+        methods: {
+                async load_urls(urls){
+                        for(const url of urls){
+                                try {
+                                        const resp = await fetch('../fetch?url='+encodeURIComponent(url));
+                                        const blob = await resp.blob();
+                                        const image = {
+                                                file: blob,
+                                                filename: 'image',
+                                                thumbnailURL: null,
+                                                width: null,
+                                                height: null,
+                                                busy: false,
+                                                queued: false,
+                                                processing: false,
+                                                error: false,
+                                                editorMounted: false,
+                                                gridBusy: false,
+
+                                                history: [],
+                                                future: [],
+                                                id: this.imageid,
+                                                checked: true,
+                                        };
+                                        this.images.push(image);
+                                        this.queueThumbnail(image);
+                                        this.imageid++;
+                                } catch(error) {
+                                        alert(error);
+                                }
+                        }
+                },
+                async load_images(e){
+                        for(const file of e.target.files){
+                                const filename = file.name.slice(0, file.name.lastIndexOf('.'));
+                                const image = {
+                                        file,
+                                        filename,
+                                        thumbnailURL: null,
+                                        width: null,
+                                        height: null,
+                                        busy: false,
+                                        queued: false,
+                                        processing: false,
+                                        error: false,
+                                        editorMounted: false,
+                                        gridBusy: false,
+
+                                        history: [],
+                                        future: [],
+                                        id: this.imageid,
+                                        checked: true,
+                                };
+                                this.images.push(image);
+                                this.queueThumbnail(image);
+                                this.imageid++;
+                        }
+                },
+		async new_image(){
+			const canvas = document.createElement('canvas');
+			canvas.width = 1000;
+			canvas.height = 1000;
+			const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+			const image = {
+				file: blob,
+				filename: 'new_image',
+				thumbnailURL: null,
+				width: 1000,
+				height: 1000,
+				busy: false,
+				queued: false,
+				processing: false,
+				error: false,
+				editorMounted: false,
+				gridBusy: false,
+
+				history: [],
+				future: [],
+				id: this.imageid,
+				checked: true,
+			};
+			this.images.push(image);
+			this.queueThumbnail(image);
+			this.imageid++;
+		},
+                dropFiles(e){
+                        if(this.dragIndex !== null) return;
+                        if(e.dataTransfer.files.length){
+                                this.load_images({target: {files: e.dataTransfer.files}});
+                        }
+                },
+                dragStart(i, e){
+                        this.dragIndex = i;
+                        e.dataTransfer.effectAllowed = 'move';
+                },
+                dragOver(i, e){
+                        if(this.dragIndex === null) return;
+                        this.dragOverIndex = i;
+                        if(i !== this.dragIndex){
+                                const item = this.images.splice(this.dragIndex, 1)[0];
+                                this.images.splice(i, 0, item);
+                                this.dragIndex = i;
+                        }
+                },
+                dragEnd(){
+                        this.dragIndex = null;
+                        this.dragOverIndex = null;
+                },
+                queueThumbnail(image){
+                        this.thumbnailQueue.push(image);
+                        this.runThumbnailQueue();
+                },
+                runThumbnailQueue(){
+                        while(this.activeThumbnails < this.thumbnailConcurrency && this.thumbnailQueue.length){
+                                const image = this.thumbnailQueue.shift();
+                                if(!this.images.includes(image)) continue;
+                                this.activeThumbnails++;
+                                this.refreshThumbnail(image)
+                                        .catch(error => console.error('Thumbnail generation failed', error))
+                                        .finally(() => {
+                                                this.activeThumbnails--;
+                                                this.runThumbnailQueue();
+                                        });
+                        }
+                },
+                async makeThumbnail(file){
+                        const url = URL.createObjectURL(file);
+                        try {
+                                const img = await new Promise((resolve, reject) => {
+                                        const img = new Image();
+                                        img.onload = () => resolve(img);
+                                        img.onerror = reject;
+                                        img.src = url;
+                                });
+                                const canvas = document.createElement('canvas');
+                                const scale = Math.min(this.thumbnailSize / img.width, this.thumbnailSize / img.height, 1);
+                                canvas.width = Math.max(1, Math.round(img.width * scale));
+                                canvas.height = Math.max(1, Math.round(img.height * scale));
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                                return {
+                                        url: URL.createObjectURL(blob),
+                                        width: img.width,
+                                        height: img.height,
+                                };
+                        } finally {
+                                URL.revokeObjectURL(url);
+                        }
+                },
+                removeQueuedThumbnail(image){
+                        this.thumbnailQueue = this.thumbnailQueue.filter(queuedImage => queuedImage !== image);
+                },
+                async settleBatchWorker(){
+                        await this.$nextTick();
+                        await new Promise(resolve => requestAnimationFrame(() => resolve()));
+                        await new Promise(resolve => requestAnimationFrame(() => resolve()));
+                        await new Promise(resolve => setTimeout(resolve, this.batchSettleMs));
+                },
+                async refreshThumbnail(image){
+                        const oldURL = image.thumbnailURL;
+                        const thumbnail = await this.makeThumbnail(image.file);
+                        if(image.thumbnailURL === oldURL){
+                                image.thumbnailURL = thumbnail.url;
+                                image.width = thumbnail.width;
+                                image.height = thumbnail.height;
+                        } else {
+                                URL.revokeObjectURL(thumbnail.url);
+                        }
+                        if(oldURL && oldURL !== image.thumbnailURL){
+                                URL.revokeObjectURL(oldURL);
+                        }
+                },
+                removeImage(i){
+                        const image = this.images[i];
+                        if(image?.thumbnailURL){
+                                URL.revokeObjectURL(image.thumbnailURL);
+                        }
+                        this.selected = null;
+                        this.images.splice(i, 1);
+                },
+                openEditor(i){
+                        this.images[i].editorMounted = true;
+                        this.selected = i;
+                },
+                selectAll(){
+                        this.images.forEach(image => { image.checked = true; });
+                },
+                deselectAll(){
+                        this.images.forEach(image => { image.checked = false; });
+                },
+                batchUndo(){
+                        for(const image of this.images){
+                                if(!image.checked || !image.history?.length){
+                                        continue;
+                                }
+                                image.future = image.future || [];
+                                image.future.push(image.file);
+                                image.file = image.history.pop();
+                                this.queueThumbnail(image);
+                        }
+                },
+                batchRedo(){
+                        for(const image of this.images){
+                                if(!image.checked || !image.future?.length){
+                                        continue;
+                                }
+                                image.history = image.history || [];
+                                image.history.push(image.file);
+                                image.file = image.future.pop();
+                                this.queueThumbnail(image);
+                        }
+                },
+                setConcurrency(val){
+                        if(val === 'custom'){
+                                const input = prompt('Enter concurrency (parallel operations):', this.batchConcurrency);
+                                if(input === null) return;
+                                const parsed = parseInt(input, 10);
+                                if(!isNaN(parsed) && parsed > 0){
+                                        val = parsed;
+                                } else {
+                                        alert('Please enter a positive integer.');
+                                        return;
+                                }
+                        }
+                        this.batchConcurrency = val;
+                        this.thumbnailConcurrency = Math.max(4, val);
+                        try {
+                                localStorage.setItem('pixelpipe_concurrency', val);
+                        } catch(e){}
+                        this.runThumbnailQueue();
+                },
+                cancelBatch(){
+                        if(!this.batchCancelRequested && this.hasQueuedBatch){
+                                this.batchCancelRequested = true;
+                                this.images.forEach(image => { image.queued = false; });
+                                return;
+                        }
+                        this.batchCancelRequested = true;
+                        if(this.batchAbortRequested){
+                                return;
+                        }
+                        const refs = this.$refs.editors || [];
+                        const editors = Array.isArray(refs) ? refs : [refs];
+                        editors.forEach(editor => {
+                                const image = editor.modelValue;
+                                if(image?.processing || image?.busy){
+                                        editor.cancel();
+                                        image.processing = false;
+                                        image.busy = false;
+                                }
+                        });
+                        this.images.forEach(image => {
+                                if(image.processing || image.busy){
+                                        image.processing = false;
+                                        image.busy = false;
+                                }
+                        });
+                        eventBus.broadcast({cancelAll: true, args: ['cancel']});
+                        this.batchAbortRequested = true;
+                },
+                async batchBroadcast(detail){
+                        const queue = this.images.filter(image => image.checked && !image.busy);
+                        const updatesImage = !['downloadJPG', 'addToZip'].includes(detail[0]);
+                        const concurrency = this.batchConcurrency;
+                        this.batchActive = true;
+                        this.batchCancelRequested = false;
+                        this.batchAbortRequested = false;
+                        queue.forEach(image => { image.queued = true; });
+                        const workers = Array.from({length: Math.min(concurrency, queue.length)}, async () => {
+                                while(queue.length && !this.batchCancelRequested){
+                                        const image = queue.shift();
+                                        image.queued = false;
+                                        image.processing = true;
+                                        image.error = false;
+                                        await this.$nextTick();
+                                        image.editorMounted = true;
+                                        await this.$nextTick();
+                                        try {
+                                                await eventBus.broadcast({targetId: image.id, args: detail}, 1);
+                                                if(updatesImage){
+                                                        await this.refreshThumbnail(image);
+                                                }
+                                        } catch(error) {
+                                                if(error.name !== 'AbortError' && !this.batchCancelRequested){
+                                                        console.error('Batch item failed:', error);
+                                                        image.error = true;
+                                                }
+                                        } finally {
+                                                if(this.selected !== this.images.indexOf(image)){
+                                                        image.editorMounted = false;
+                                                }
+                                                await this.settleBatchWorker();
+                                                image.processing = false;
+                                                await this.$nextTick();
+                                        }
+                                }
+                        });
+                        try {
+                                await Promise.all(workers);
+                        } finally {
+                                queue.length = 0;
+                                this.images.forEach(image => { image.queued = false; });
+                                this.batchActive = false;
+                                this.batchCancelRequested = false;
+                                this.batchAbortRequested = false;
+                                this.runThumbnailQueue();
+                        }
+                },
+                process(appName, model){
+                        const providers = this.schema[appName] || {};
+                        const paneProvider = model
+                                ? (Object.entries(providers).find(([p, s]) => s.model.options.includes(model))?.[0] || '')
+                                : (Object.keys(providers)[0] || '');
+                        const schema = providers[paneProvider] || {};
+                        const options = {};
+                        const fields = {};
+                        for (const [k,v] of Object.entries(schema)){
+                                options[k] = v.default;
+                                if (k === 'model') continue;
+                                const selected = model || options.model;
+                                if (Array.isArray(v.models) && selected && !v.models.includes(selected)) continue;
+                                if (Array.isArray(v.exclude_models) && selected && v.exclude_models.includes(selected)) continue;
+                                fields[k] = v;
+                        }
+                        if(model) options.model = model;
+                        this.options = options;
+                        this.paneApp = appName;
+                        if (Object.keys(fields).length > 0) {
+                                this.paneFields = fields;
+                                this.paneProvider = paneProvider;
+                                this.showPane = true;
+                        } else {
+                                this.batchBroadcast([appName, options]);
+                        }
+                },
+                paneGo(){
+                        this.showPane = false;
+                        this.batchBroadcast([this.paneApp, this.options]);
+                },
+                closePane(){
+                        this.showPane = false;
+                },
+                download_all(){
+                        this.batchBroadcast(['downloadJPG']);
+                },
+                download_one(image, i){
+                        const url = window.URL.createObjectURL(image.file);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'output_' + (i+1) + '.jpg';
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                },
+                async download_zip() {
+                        const zip = new JSZip();
+                        await this.batchBroadcast(['addToZip', zip]);
+                        zip.generateAsync({ type: 'blob' }).then((content) => {
+                                const downloadLink = document.createElement('a');
+                                const url = URL.createObjectURL(content);
+                                downloadLink.href = url;
+                                downloadLink.download = 'images.zip';
+                                document.body.appendChild(downloadLink);
+                                downloadLink.click();
+                                document.body.removeChild(downloadLink);
+                                URL.revokeObjectURL(url);
+                        });
+                },
+        },
+        template: `<div style="display: flex; flex-direction: column; height: 100vh;" @dragover.prevent @drop.prevent="dropFiles">
+
+<div class="menubar" :class="{disabled: gridBusy}" v-show="selected === null">
+        <a href="/pixeldeck/" class="shortcut" style="font-weight: 600;">Pixel Pipe</a>
+        <div class="sep"></div>
+        <span class="shortcut" @click="$refs.fileInput.click()">Open</span>
+        <span class="shortcut" @click="new_image">New</span>
+        <div class="sep"></div>
+        <span class="shortcut" @click="selectAll" title="Select All">☑</span>
+        <span class="shortcut" @click="deselectAll" title="Deselect All">☐</span>
+        <div class="sep"></div>
+        <span class="shortcut" @click="batchUndo" title="Undo Checked">↶</span>
+        <span class="shortcut" @click="batchRedo" title="Redo Checked">↷</span>
+        <div class="sep"></div>
+
+        <template v-for="(group, gi) in appMenus">
+                <div v-if="group.models.length === 1" class="menu"><div class="menu-trigger" @click="process(group.app, group.models[0].model)">{{ group.app }}</div></div>
+                <dropdown-menu v-else :label="group.app" :items="group.models" @select="m => process(group.app, m.model)">
+                        <template #item="{item}">{{ item.provider }}: {{ item.model }}</template>
+                </dropdown-menu>
+        </template>
+
+        <div class="sep"></div>
+        <dropdown-menu label="Photo Box 2048" :items="photoBoxOptions" @select="item => item.fn()">
+                <template #item="{item}">{{ item.text }}</template>
+        </dropdown-menu>
+        <div class="sep"></div>
+        <span class="shortcut" @click="batchBroadcast(['crop'])">Crop</span>
+        <dropdown-menu label="Resize" :items="resizeOptions" @select="item => item.fn()">
+                <template #item="{item}">{{ item.text }}</template>
+        </dropdown-menu>
+        <div class="sep"></div>
+        <dropdown-menu :label="'Concurrency: ' + batchConcurrency" :items="concurrencyOptions" @select="item => setConcurrency(item.value)">
+                <template #item="{item}">{{ item.text }}</template>
+        </dropdown-menu>
+        <div class="sep"></div>
+        <span class="shortcut" @click="download_all">Download All</span>
+        <span class="shortcut" @click="download_zip">Download Zip</span>
+        <component v-for="(comp, idx) in pluginComponents" :key="idx" :is="comp" :app="this" />
+</div>
+<div v-show="selected === null" style="position: relative;">
+        <div class="menubar" style="justify-content: center; border-bottom: 1px solid #ddd; visibility: hidden;">
+                <span class="shortcut">Clear Queue</span>
+        </div>
+        <div v-if="batchActive && !batchAbortRequested" class="menubar" style="justify-content: center; border-bottom: 1px solid #ddd; position: absolute; left: 0; right: 0; top: 0; z-index: 2;">
+                <span class="shortcut" @click="cancelBatch">{{ batchCancelLabel }}</span>
+        </div>
+</div>
+
+<input ref="fileInput" type="file" accept="*/*" @change="load_images" :disabled="gridBusy" multiple style="display: none;" />
+<div id="main" :class="selected!==null?'editor-active':''">
+        <div id="thumbs">
+                <div v-if="!images.length" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: darkgray; pointer-events: none;">Open files or drag images here</div>
+                <div class="thumb-card" v-for="(image, i) in images" draggable="true" @dragstart="dragStart(i, $event)" @dragover.prevent="dragOver(i, $event)" @dragend="dragEnd" :class="{dragging: dragIndex === i, 'drag-over': dragOverIndex === i && dragIndex !== i}">
+                        <input type="checkbox" v-model="image.checked" />
+                        <img :src="image.thumbnailURL || thumbnailPlaceholder" :class="{busy: image.busy, processing: image.processing, queued: image.queued && !image.busy && !image.processing, error: image.error}" @click="openEditor(i)" />
+                        <div v-if="image.width && image.height" class="thumb-dim">{{ image.width }}×{{ image.height }}</div>
+                        <div class="thumb-controls">
+                                <a @click="download_one(image, i)">⬇</a>
+                                <a @click="post_one(image, i)" v-if="typeof post_one === 'function' && session_id" title="Post to URL">⇧</a>
+                                <a @click="removeImage(i)">✖</a>
+                        </div>
+                </div>
+        </div>
+</div>
+
+<div v-for="(image, i) in images" :class="'image-editor'+(i===selected?' editor-active':'')" :key="image.id">
+        <pixeldeck-editor ref="editors" v-if="image.editorMounted || i===selected || image.queued || image.busy" base-url="../" :event-bus="eventBus" :active="i===selected" :modelValue="image" :filename="'output_'+(i+1)" @file="image.file = $event; if(!image.processing) queueThumbnail(image)" @close="selected = null; image.editorMounted = false; queueThumbnail(image)" @busy="image.busy = $event; if($event) image.queued = false" />
+</div>
+
+<div v-if="showPane" class="modal-backdrop" @click.self="closePane">
+        <div class="modal">
+                <div class="modal-header">
+                        <span>{{ paneProvider }}: {{ options.model }}</span>
+                        <span class="shortcut" @click="closePane">\u2715</span>
+                </div>
+                <div class="modal-body">
+                        <template v-for="(field, key) in paneFields" :key="key">
+                                <label class="modal-label">{{ key }}</label>
+                                <template v-if="field.type === 'string'">
+                                        <textarea class="modal-textarea" v-model="options[key]" :placeholder="key" rows="6"></textarea>
+                                        <div v-if="field.presets" class="modal-presets">
+                                                <span v-for="(val, name) in field.presets" :key="name" class="modal-preset" @click="options[key] = val">{{ name }}</span>
+                                        </div>
+                                </template>
+                                <select v-else-if="field.type === 'enum'" class="modal-select" v-model="options[key]">
+                                        <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
+                                </select>
+                        </template>
+                </div>
+                <button class="modal-go" @click="paneGo">Go</button>
+        </div>
+</div>
+
+</div>`
+};
+if (window.pixeldeckPlugins) {
+        window.pixeldeckPlugins.forEach(p => typeof p === 'function' ? p(app) : p.install?.(app));
+}
+const _app = Vue.createApp(app);
+_app.config.compilerOptions.isCustomElement = (tag) => {
+        return tag == 'image-masker';
+}
+_app.mount("#app");
+</script>
+<script src="masker.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0">
+<title>Pixel Deck</title>
+<link rel="icon" href="static/pixeldeck.svg">
+<link rel="stylesheet" href="static/pixeldeck-editor.css">
+<style>
+* { box-sizing: border-box; }
+body { font-family: sans-serif; margin: 0; }
+button { height: 1.5rem; }
+a:link, a:visited { color: black; text-decoration: none; }
+a:hover { color: #3af; }
+</style>
+<script src="static/vue.global.prod.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import { pixeldeckEditor } from './static/pixeldeck-editor.js';
+const app = Vue.createApp({
+	components: { 'pixeldeck-editor': pixeldeckEditor },
+	template: '<pixeldeck-editor />'
+});
+app.config.compilerOptions.isCustomElement = (tag) => tag == 'image-masker';
+app.mount("#app");
+</script>
+<script src="static/masker.js"></script>
+</body>
+</html>

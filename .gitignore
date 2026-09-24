@@ -1,0 +1,27 @@
+# Local configuration and credentials
+config.json
+*.env
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+
+# Runtime output
+pixeldeck-output/
+*.log
+
+# Downloaded engines and models (install.sh populates this)
+bin/
+
+# Private plugins
+plugins/private/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

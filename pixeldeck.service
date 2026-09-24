@@ -1,0 +1,23 @@
+# systemd user unit for Pixeldeck.
+#
+# install.sh --service replaces @PIXELDECK_DIR@ with the directory the app was
+# installed in and writes the result to ~/.config/systemd/user/. If you copy
+# this file by hand, do the same substitution yourself.
+#
+#   cp pixeldeck.service ~/.config/systemd/user/     (after editing the paths)
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now pixeldeck.service
+#   journalctl --user -u pixeldeck.service -f
+[Unit]
+Description=Pixeldeck image editor
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=@PIXELDECK_DIR@
+ExecStart=@PIXELDECK_DIR@/.venv/bin/python3 @PIXELDECK_DIR@/server.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

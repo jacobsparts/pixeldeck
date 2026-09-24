@@ -19,8 +19,13 @@ def setup(app, route, get_config):
 ```
 
 `route(method, path)` registers a handler on the aiohttp app, and
-`get_config("my_plugin")` returns that section of `config.json` (add it to
-`config.example.json` to make it editable from the Config dialog).
+`get_config("my_plugin")` returns that section of `config.json`.
+
+A plugin's settings live in `config.json` like everything else. `config.py` only
+lets the Config dialog write sections and keys that `config.example.json` lists,
+so add the section there if you want it editable in the browser; a private
+plugin can equally just read a section the user put in `config.json` by hand,
+which keeps private settings out of the public repo.
 
 ## Front end
 

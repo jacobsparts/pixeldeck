@@ -16,6 +16,8 @@ After=network.target
 Type=simple
 WorkingDirectory=@PIXELDECK_DIR@
 ExecStart=@PIXELDECK_DIR@/.venv/bin/python3 @PIXELDECK_DIR@/server.py
+# To bind somewhere else, add the flags here, for example:
+#ExecStart=@PIXELDECK_DIR@/.venv/bin/python3 @PIXELDECK_DIR@/server.py --host 0.0.0.0 --port 9000
 Restart=on-failure
 RestartSec=2
 

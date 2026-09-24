@@ -12,12 +12,6 @@ async def ailabtools(request, post, deliver_bin_image, api_key):
         'Image Upscaler 4x': 'https://www.ailabapi.com/api/image/enhance/image-lossless-enlargement',
         'Image Upscaler 4x + Enhance': 'https://www.ailabapi.com/api/image/enhance/image-lossless-enlargement',
         'Image Erasure': 'https://www.ailabapi.com/api/image/editing/image-erase',
-        'Image Sharpness': 'https://www.ailabapi.com/api/image/enhance/image-sharpness-enhancement',
-        'Image Contrast Enhancement': 'https://www.ailabapi.com/api/image/enhance/image-contrast-enhancement',
-        'Image Dehaze': 'https://www.ailabapi.com/api/image/enhance/image-defogging',
-        'Image Color Enhancement LogC': 'https://www.ailabapi.com/api/image/enhance/image-color-enhancement',
-        'Image Color Enhancement Rec709': 'https://www.ailabapi.com/api/image/enhance/image-color-enhancement',
-        'Image Color Enhancement ln17_256': 'https://www.ailabapi.com/api/image/enhance/image-color-enhancement',
     }[post['model']]
 
     image_bin = post['image'].file.read()
@@ -40,12 +34,6 @@ async def ailabtools(request, post, deliver_bin_image, api_key):
     elif post['model'] == 'Image Erasure':
         mask_bin = post['mask'].file.read()
         form.add_field('mask_image', mask_bin, filename='mask.png', content_type='image/png')
-    elif post['model'] == 'Image Color Enhancement LogC':
-        form.add_field('type', 'LogC')
-    elif post['model'] == 'Image Color Enhancement Rec709':
-        form.add_field('type', 'Rec709')
-    elif post['model'] == 'Image Color Enhancement ln17_256':
-        form.add_field('type', 'ln17_256')
 
     async with aiohttp.ClientSession() as session:
         async with session.post(
@@ -100,26 +88,6 @@ def register_provider(register, get_config):
         'model': {
             'options': ['Image Erasure'],
             'default': 'Image Erasure',
-        },
-    })(handler)
-
-    register('AILabTools', 'Contrast', {
-        'model': {
-            'options': ['Image Contrast Enhancement'],
-            'default': 'Image Contrast Enhancement',
-        },
-    })(handler)
-
-    register('AILabTools', 'Enhance', {
-        'model': {
-            'options': [
-                'Image Sharpness',
-                'Image Dehaze',
-                'Image Color Enhancement LogC',
-                'Image Color Enhancement Rec709',
-                'Image Color Enhancement ln17_256',
-            ],
-            'default': 'Image Sharpness',
         },
     })(handler)
 

@@ -13,7 +13,7 @@ privacy policies apply to that request.
 | --- | --- | --- | --- |
 | Google Gemini | `gemini` | `generativelanguage.googleapis.com` | AI Edit |
 | [OI] | `openai` | `api.openai.com` | AI Edit |
-| [AILabTools] | `ailabtools` | `www.ailabapi.com` | Super Resolution, Inpainting, Background Removal, Contrast, Enhance |
+| [AILabTools] | `ailabtools` | `www.ailabapi.com` | Super Resolution, Inpainting, Background Removal |
 | [Pixian.AI] | `pixian` | `api.pixian.ai` | Background Removal |
 | [Replicate] | `replicate` | `api.replicate.com` | Super Resolution, Background Removal, Enhance, Maxim |
 

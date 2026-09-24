@@ -19,8 +19,8 @@ and, on a GPU, the CUDA driver — no toolkit, no cuDNN, no PyTorch, no Python.
 Cloud image APIs are supported as well, but only if you put your own
 credentials in `config.json`; without them those tools simply do not appear.
 
-The server binds to `127.0.0.1` and has no authentication. Do not expose it to
-a network.
+The server binds to `127.0.0.1:8081` by default; `--host` and `--port` put it
+somewhere else. It has no authentication of its own.
 
 ## Tools
 
@@ -30,8 +30,8 @@ a network.
 | Inpainting | local LaMa, with optional tile and section modes; AILabTools erasure |
 | Background Removal | local RMBG-2.0; Pixian; AILabTools; Replicate rembg, modnet, dis |
 | Auto-Crop | local LocateAnything-3B, prompted for single items, kits or light items |
-| Contrast | local exposure fusion, adaptive enhancement, white balance and gamma correction — tone and luminance, not only color; AILabTools contrast |
-| Enhance | AILabTools sharpness, dehaze and color; Replicate scunet, NAFNet, night enhancement |
+| Contrast | local exposure fusion, adaptive enhancement, white balance and gamma correction — tone and luminance, not only color |
+| Enhance | Replicate scunet, NAFNet, night enhancement |
 | AI Edit | Gemini image models, [OI] image models |
 | Maxim | Replicate's Maxim models (denoise, deblur, derain, dehaze, low-light) |
 
@@ -98,7 +98,8 @@ is the same editor with a single image in it, for one-off edits.
 ```console
 .venv/bin/python3 server.py --help
 .venv/bin/python3 server.py --port 9000
-.venv/bin/python3 server.py --host 0.0.0.0      # only if you know why
+.venv/bin/python3 server.py --host 192.168.1.10
+.venv/bin/python3 server.py --host 0.0.0.0
 ```
 
 To run it as a service, `./install.sh --service` writes a systemd user unit

@@ -6,8 +6,8 @@ tools. Each tool is either a local GPU binary under ``bin/`` (installed by
 ``install.sh``) or a third-party image API; which ones are offered depends on
 which credentials are present in ``config.json``.
 
-The server binds to the loopback interface only. It has no authentication and
-is not meant to be exposed to a network.
+The server binds to 127.0.0.1:8081 unless ``--host`` or ``--port`` say
+otherwise. It has no authentication of its own.
 """
 import argparse
 import asyncio
@@ -257,7 +257,10 @@ async def run(app, host, port):
     try:
         site = web.TCPSite(runner, host, port)
         await site.start()
-        print(f'Pixeldeck listening on http://{host}:{port}/pixeldeck/')
+        # Show an address that can actually be typed into a browser: a
+        # wildcard bind has no name of its own.
+        shown = '127.0.0.1' if host in ('0.0.0.0', '::', '') else host
+        print(f'Pixeldeck listening on http://{shown}:{port}/pixeldeck/', flush=True)
         while True:
             await asyncio.sleep(3600)
     finally:

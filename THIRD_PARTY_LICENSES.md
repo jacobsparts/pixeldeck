@@ -15,13 +15,20 @@ These are checked into `static/` and served as-is.
 | [JSZip](https://github.com/Stuk/jszip) | 3.10.1 | MIT or GPLv3 | (c) 2009-2016 Stuart Knightley |
 
 `static/dropdown-menu.js`, `static/masker.js`, `static/pixeldeck-editor.js`,
-`static/pixeldeck-editor.css`, `static/pixeldeck.html` and
-`static/pixelpipe.html` are part of Pixeldeck.
+`static/pixeldeck-editor.css`, `static/index.html` and
+`static/single-image.html` are part of Pixeldeck.
 
 ## Engine binaries
 
 `install.sh` downloads prebuilt binaries from the release pages of these
 repositories. They are not distributed with Pixeldeck.
+
+All of them are built on [lightgpu](https://github.com/jacobsparts/lightgpu),
+our dependency-light CUDA toolkit for inference engines: hand-written CUDA
+kernels with matching pure-Rust implementations, and a driver layer that is
+`dlopen`ed at run time. That is why the binaries have no runtime dependencies
+beyond libc (and an optional CUDA driver) — no CUDA toolkit, no cuDNN, no
+PyTorch, no Python.
 
 | engine | repository | licence |
 | --- | --- | --- |

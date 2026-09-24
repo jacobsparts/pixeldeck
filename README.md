@@ -8,7 +8,12 @@ page, with undo.
 It runs on your own machine. The heavy work is done by small standalone Rust
 binaries that Pixeldeck downloads on install and runs as subprocesses, so there
 is no Python image-processing stack to fight with and no build step for the
-front end. Cloud image APIs are supported as well, but only if you put your own
+front end. Those engines are built on
+[lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
+toolkit: hand-written CUDA kernels with matching pure-Rust implementations, and
+a driver layer `dlopen`ed at run time. They need nothing at run time but libc
+and, on a GPU, the CUDA driver — no toolkit, no cuDNN, no PyTorch, no Python.
+Cloud image APIs are supported as well, but only if you put your own
 credentials in `config.json`; without them those tools simply do not appear.
 
 The server binds to `127.0.0.1` and has no authentication. Do not expose it to
@@ -82,6 +87,10 @@ carries on, and re-running picks up what is missing.
 
 then open <http://127.0.0.1:8081/>.
 
+`/` redirects to the main page, `static/index.html`, which is the batch editor:
+drop a folder of images on it and work through them. `static/single-image.html`
+is the same editor with a single image in it, for one-off edits.
+
 ```console
 .venv/bin/python3 server.py --help
 .venv/bin/python3 server.py --port 9000
@@ -125,17 +134,29 @@ Which section enables what is in [THIRD_PARTY.md](THIRD_PARTY.md).
 one is a plain command-line program that Pixeldeck runs with `subprocess`; you
 can run them by hand the same way.
 
-| binary | weights | tool |
-| --- | --- | --- |
-| `realesrgan-linux-x86_64` | `models/RealESRGAN_*.safetensors`, `4x_RealisticRescaler_100000_G.safetensors` | Super Resolution |
-| `lama-inpaint` | `models/big-lama.safetensors` | Inpainting |
-| `rmbg-linux-x86_64` | `models/RMBG-2.0.safetensors` | Background Removal |
-| `locate-anything` | `models/locate-anything-allq8_0.laqt` | Auto-Crop |
-| `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |
+| engine | repository | binary | weights | tool |
+| --- | --- | --- | --- | --- |
+| Real-ESRGAN | [realesrgan-rs](https://github.com/jacobsparts/realesrgan-rs) | `realesrgan-linux-x86_64` | `models/RealESRGAN_*.safetensors`, `4x_RealisticRescaler_100000_G.safetensors` | Super Resolution |
+| LaMa | [lama-inpaint-rs](https://github.com/jacobsparts/lama-inpaint-rs) | `lama-inpaint` | `models/big-lama.safetensors` | Inpainting |
+| BiRefNet / RMBG-2.0 | [rmbg-rs](https://github.com/jacobsparts/rmbg-rs) | `rmbg-linux-x86_64` | `models/RMBG-2.0.safetensors` | Background Removal |
+| LocateAnything-3B | [locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | `locate-anything` | `models/locate-anything-allq8_0.laqt` | Auto-Crop |
+| OpenCE exposure fusion, IAGCWD, white balance | [adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |
 
-All of them are GPU tools, so only one may run at a time: they are serialized
-by a single process-wide lock in `gpu_guard.py`, which is enough because the
-server is the only thing that ever starts them.
+They are all built on [lightgpu](https://github.com/jacobsparts/lightgpu), our
+dependency-light CUDA toolkit for inference engines: the CUDA driver API is
+`dlopen`ed at run time, and every CUDA kernel has a matching pure-Rust
+implementation, so `--no-default-features` yields a CPU build with no CUDA
+toolchain at all. What that buys you is in `ldd` — the binaries link against
+nothing but libc (plus the driver, if there is one):
+
+```console
+$ ldd bin/realesrgan-linux-x86_64
+        linux-vdso.so.1  libgcc_s.so.1  libm.so.6  libc.so.6
+```
+
+All of them are GPU tools when a GPU is present, so only one may run at a time:
+they are serialized by a single process-wide lock in `gpu_guard.py`, which is
+enough because the server is the only thing that ever starts them.
 
 Sources, versions and licences are in
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
@@ -148,6 +169,8 @@ config.py              config.json and config.example.json
 providers/             one module per image source, each registering its tools
 plugins/               optional plugins (plugins/private/ is git-ignored)
 static/                the front end: no build step, no bundler
+static/index.html      the main page (batch editor)
+static/single-image.html  the same editor for one image
 crop_subject_vision.py Auto-Crop: prompts the detector and picks the box
 gpu_guard.py           the lock that serializes the GPU binaries
 gemini_edit.py         AI Edit against the Gemini image API

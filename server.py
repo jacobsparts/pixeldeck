@@ -139,7 +139,17 @@ async def root(request):
 
 @get('/pixeldeck/')
 async def index(request):
-    return web.FileResponse(os.path.join(STATIC_DIR, 'pixeldeck.html'))
+    return web.FileResponse(os.path.join(STATIC_DIR, 'index.html'))
+
+
+@get('/favicon.ico')
+async def favicon_root(request):
+    return web.FileResponse(os.path.join(STATIC_DIR, 'pixeldeck.svg'))
+
+
+@get('/pixeldeck/favicon.ico')
+async def favicon(request):
+    return web.FileResponse(os.path.join(STATIC_DIR, 'pixeldeck.svg'))
 
 
 @get('/pixeldeck/static/{filename}')

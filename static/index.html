@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="initial-scale=1.0">
-<title>Pixel Pipe</title>
-<link rel="icon" href="pixeldeck.svg">
-<link rel="stylesheet" href="pixeldeck-editor.css">
+<title>PixelDeck</title>
+<link rel="icon" type="image/svg+xml" href="static/pixeldeck.svg">
+<link rel="stylesheet" href="static/pixeldeck-editor.css">
 <style>
 * { box-sizing: border-box; }
 body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f0f0f0; }
@@ -165,15 +165,15 @@ a:hover { color: #3af; }
         pointer-events: auto;
 }
 </style>
-<script src="vue.global.prod.js"></script>
-<script src="jszip.min.js"></script>
-<script src="../plugins.js"></script>
+<script src="static/vue.global.prod.js"></script>
+<script src="static/jszip.min.js"></script>
+<script src="plugins.js"></script>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { pixeldeckEditor } from './pixeldeck-editor.js';
-import { dropdownMenu } from './dropdown-menu.js';
+import { pixeldeckEditor } from './static/pixeldeck-editor.js';
+import { dropdownMenu } from './static/dropdown-menu.js';
 
 class EventBus {
   constructor() {
@@ -251,7 +251,7 @@ const app = {
         }},
         components: { 'pixeldeck-editor': pixeldeckEditor, 'dropdown-menu': dropdownMenu },
                 async created(){
-                fetch('../schema').then(r=>r.json()).then(json=>{ this.schema = json; });
+                fetch('/pixeldeck/schema').then(r=>r.json()).then(json=>{ this.schema = json; });
                 const params = new URLSearchParams(window.location.search);
                 if(window.location.search){
                         let urls = params.get("urls");
@@ -323,7 +323,7 @@ const app = {
                 async load_urls(urls){
                         for(const url of urls){
                                 try {
-                                        const resp = await fetch('../fetch?url='+encodeURIComponent(url));
+                                        const resp = await fetch('/pixeldeck/fetch?url='+encodeURIComponent(url));
                                         const blob = await resp.blob();
                                         const image = {
                                                 file: blob,
@@ -691,7 +691,7 @@ const app = {
         template: `<div style="display: flex; flex-direction: column; height: 100vh;" @dragover.prevent @drop.prevent="dropFiles">
 
 <div class="menubar" :class="{disabled: gridBusy}" v-show="selected === null">
-        <a href="/pixeldeck/" class="shortcut" style="font-weight: 600;">Pixel Pipe</a>
+        <a href="/pixeldeck/" class="shortcut" style="font-weight: 600;">PixelDeck</a>
         <div class="sep"></div>
         <span class="shortcut" @click="$refs.fileInput.click()">Open</span>
         <span class="shortcut" @click="new_image">New</span>
@@ -755,7 +755,7 @@ const app = {
 </div>
 
 <div v-for="(image, i) in images" :class="'image-editor'+(i===selected?' editor-active':'')" :key="image.id">
-        <pixeldeck-editor ref="editors" v-if="image.editorMounted || i===selected || image.queued || image.busy" base-url="../" :event-bus="eventBus" :active="i===selected" :modelValue="image" :filename="'output_'+(i+1)" @file="image.file = $event; if(!image.processing) queueThumbnail(image)" @close="selected = null; image.editorMounted = false; queueThumbnail(image)" @busy="image.busy = $event; if($event) image.queued = false" />
+        <pixeldeck-editor ref="editors" v-if="image.editorMounted || i===selected || image.queued || image.busy" base-url="/pixeldeck/" :event-bus="eventBus" :active="i===selected" :modelValue="image" :filename="'output_'+(i+1)" @file="image.file = $event; if(!image.processing) queueThumbnail(image)" @close="selected = null; image.editorMounted = false; queueThumbnail(image)" @busy="image.busy = $event; if($event) image.queued = false" />
 </div>
 
 <div v-if="showPane" class="modal-backdrop" @click.self="closePane">
@@ -793,6 +793,6 @@ _app.config.compilerOptions.isCustomElement = (tag) => {
 }
 _app.mount("#app");
 </script>
-<script src="masker.js"></script>
+<script src="static/masker.js"></script>
 </body>
 </html>

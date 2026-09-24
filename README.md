@@ -50,9 +50,10 @@ to the mask, undo and redo, PNG and JPG export.
 - About 1.4 GB of disk, or about 5.6 GB with Auto-Crop (whose model is built
   from a 7.7 GB download, so that step wants ~13 GB free)
 
-A GPU is optional. The engine binaries are CUDA builds that probe the driver at
-start-up and fall back to the CPU backend, so they work either way. Run
-`./install.sh --cpu-only` to fetch the smaller CPU-only builds instead.
+A GPU is optional. The four inference engines are CUDA builds that probe the
+driver at start-up and fall back to the CPU backend, so they work either way;
+run `./install.sh --cpu-only` to fetch the smaller CPU-only builds instead. The
+contrast tools are plain Rust and need no GPU at all.
 
 ## Install
 
@@ -159,9 +160,10 @@ $ ldd bin/realesrgan-linux-x86_64
         linux-vdso.so.1  libgcc_s.so.1  libm.so.6  libc.so.6
 ```
 
-All of them are GPU tools when a GPU is present, so only one may run at a time:
-they are serialized by a single process-wide lock in `gpu_guard.py`, which is
-enough because the server is the only thing that ever starts them.
+The four inference engines are GPU tools when a GPU is present, so only one may
+run at a time: they are serialized by a single process-wide lock in
+`gpu_guard.py`, which is enough because the server is the only thing that ever
+starts them.
 
 Sources, versions and licenses are in
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

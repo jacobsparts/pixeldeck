@@ -23,12 +23,13 @@ These are checked into `static/` and served as-is.
 `install.sh` downloads prebuilt binaries from the release pages of these
 repositories. They are not distributed with Pixeldeck.
 
-All of them are built on [lightgpu](https://github.com/jacobsparts/lightgpu),
-our dependency-light CUDA toolkit for inference engines: hand-written CUDA
-kernels with matching pure-Rust implementations, and a driver layer that is
-`dlopen`ed at run time. That is why the binaries have no runtime dependencies
-beyond libc (and an optional CUDA driver) — no CUDA toolkit, no cuDNN, no
-PyTorch, no Python.
+The four inference engines are built on
+[lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
+toolkit for inference engines: hand-written CUDA kernels with matching pure-Rust
+implementations, and a driver layer that is `dlopen`ed at run time. The contrast
+tools are plain Rust, with no CUDA in them. That is why the binaries have no
+runtime dependencies beyond libc (and an optional CUDA driver) — no CUDA
+toolkit, no cuDNN, no PyTorch, no Python.
 
 | engine | repository | license |
 | --- | --- | --- |

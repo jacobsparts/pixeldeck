@@ -1,4 +1,4 @@
-# Third-party licences and attribution
+# Third-party licenses and attribution
 
 Pixeldeck itself is MIT-licensed (see [LICENSE](LICENSE)). It is a front end:
 almost everything it does with an image is done by something else, and those
@@ -8,7 +8,7 @@ somethings have their own terms.
 
 These are checked into `static/` and served as-is.
 
-| library | version | licence | copyright |
+| library | version | license | copyright |
 | --- | --- | --- | --- |
 | [Vue](https://github.com/vuejs/core) | 3.2.47 | MIT | (c) 2013-present, Yuxi (Evan) You |
 | [pica](https://github.com/nodeca/pica) | 9.x | MIT | (c) 2014-2024 Vitaly Puzrin |
@@ -30,13 +30,13 @@ kernels with matching pure-Rust implementations, and a driver layer that is
 beyond libc (and an optional CUDA driver) — no CUDA toolkit, no cuDNN, no
 PyTorch, no Python.
 
-| engine | repository | licence |
+| engine | repository | license |
 | --- | --- | --- |
 | Real-ESRGAN upscaling | [jacobsparts/realesrgan-rs](https://github.com/jacobsparts/realesrgan-rs) | MIT (c) 2026 Jacob Stoner |
 | LaMa inpainting | [jacobsparts/lama-inpaint-rs](https://github.com/jacobsparts/lama-inpaint-rs) | Apache-2.0 |
 | RMBG-2.0 background removal | [jacobsparts/rmbg-rs](https://github.com/jacobsparts/rmbg-rs) | MIT (c) 2026 Jacob Stoner |
 | LocateAnything detection | [jacobsparts/locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | MIT (c) 2026 Ettore Di Giacinto and the LocalAI team |
-| exposure and colour correction | [jacobsparts/adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | MIT (c) 2017 Zhenqiang Ying |
+| exposure, tone and color correction | [jacobsparts/adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | MIT (c) 2017 Zhenqiang Ying |
 
 `adaptive-enhance` is a port of the `adaptiveImageEnhancement` module of
 [OpenCE](https://github.com/baidut/OpenCE) (MIT) and implements the CAIP 2017
@@ -54,7 +54,7 @@ Transformer backbone is MIT-licensed (Microsoft Research).
 **None of them are distributed with Pixeldeck**, and two of them are licensed
 for non-commercial use only — read the terms before you download them.
 
-| model | used for | licence |
+| model | used for | license |
 | --- | --- | --- |
 | RealESRGAN_x4plus / x2plus / RealESRNet_x4plus | Super Resolution | BSD-3-Clause, (c) 2021 Xintao Wang ([Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)) |
 | 4x_RealisticRescaler_100000_G | Super Resolution | see `MODEL_LICENSE-RealisticRescaler.txt` in the realesrgan-rs release |

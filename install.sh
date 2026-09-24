@@ -177,7 +177,7 @@ fetch "$(github lama-inpaint-rs "$LAMA_VERSION" big-lama.safetensors)" \
 
 # ------------------------------------------------------- gated / built models
 #
-# Two of the models cannot be release assets: RMBG-2.0 is behind a licence
+# Two of the models cannot be release assets: RMBG-2.0 is behind a license
 # gate on Hugging Face, and the LocateAnything container is over GitHub's
 # per-file limit and has to be built from NVIDIA's checkpoint. Each engine
 # ships the script that does it, and each is optional.

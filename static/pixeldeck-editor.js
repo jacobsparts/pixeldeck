@@ -42,7 +42,7 @@ export const pixeldeckEditor = {
 		imageLoadPromise: null,
 		imageLoadResolve: null,
 		updatingFromModel: false,
-		cancelled: false,
+		canceled: false,
 		inBatch: false,
 		configSections: null,
 		showConfig: false,
@@ -207,7 +207,7 @@ export const pixeldeckEditor = {
 		async go(e,maskBlob, { silent = false } = {}){
 			this.busy = true;
 			await this.waitForImageMasker();
-			if(this.cancelled){
+			if(this.canceled){
 				this.busy = false;
 				return;
 			}
@@ -215,15 +215,15 @@ export const pixeldeckEditor = {
 				const blob = await this.image_masker.maskBlob;
 				return this.go(e, blob, { silent });
 			}
-			if(this.cancelled){
+			if(this.canceled){
 				this.busy = false;
 				return;
 			}
 			const controller = this.abort_controller = new AbortController();
-			if(this.cancelled){
+			if(this.canceled){
 				controller.abort();
 			}
-			if(this.cancelled){
+			if(this.canceled){
 				this.busy = false;
 				return;
 			}
@@ -256,7 +256,7 @@ export const pixeldeckEditor = {
 			canvas.width = 0;
 			canvas.height = 0;
 
-			if(this.cancelled){
+			if(this.canceled){
 				this.busy = false;
 				return;
 			}
@@ -282,7 +282,7 @@ export const pixeldeckEditor = {
 				}
 			})
 			.then(async blob => {
-				if(this.cancelled){
+				if(this.canceled){
 					return;
 				}
 				if (cropBox) {
@@ -300,7 +300,7 @@ export const pixeldeckEditor = {
 					compCanvas.width = 0;
 					compCanvas.height = 0;
 				}
-				if(this.cancelled){
+				if(this.canceled){
 					return;
 				}
 				this.newHistory();
@@ -315,7 +315,7 @@ export const pixeldeckEditor = {
 			})
 		},
 		cancel(){
-			this.cancelled = true;
+			this.canceled = true;
 			if(this.abort_controller){
 				this.abort_controller.abort();
 			}
@@ -346,7 +346,7 @@ export const pixeldeckEditor = {
 				this.showPane = true;
 			} else {
 				this.showPane = false;
-				this.cancelled = false;
+				this.canceled = false;
 				this.go();
 			}
 		},
@@ -362,7 +362,7 @@ export const pixeldeckEditor = {
 			if(model) options.model = model;
 			this.options = options;
 			this.showPane = false;
-			this.cancelled = false;
+			this.canceled = false;
 			await this.go(null, null, { silent });
 		},
 		async photoBoxMacro(model = 'Single Item'){
@@ -371,13 +371,13 @@ export const pixeldeckEditor = {
 				this.app = 'Auto-Crop';
 				this.options = { model };
 				this.showPane = false;
-				this.cancelled = false;
+				this.canceled = false;
 				await this.go(null, null, { silent: false });
-				if(this.cancelled){return}
+				if(this.canceled){return}
 				await this.runProcess('Background Removal', 'RMBG-2.0');
-				if(this.cancelled){return}
+				if(this.canceled){return}
 				await this.crop();
-				if(this.cancelled){return}
+				if(this.canceled){return}
 				await this.resize(2048);
 			} catch(error) {
 				this.busy = false;
@@ -386,7 +386,7 @@ export const pixeldeckEditor = {
 		},
 		paneGo(){
 			this.showPane = false;
-			this.cancelled = false;
+			this.canceled = false;
 			this.go();
 		},
 		closePane(){
@@ -723,11 +723,11 @@ export const pixeldeckEditor = {
 			}
 			if(detail.targetId != null && this.modelValue?.id !== detail.targetId){return}
 			if(!this.checked){return}
-			this.cancelled = false;
+			this.canceled = false;
 			this.syncModelImage();
 			await this.$nextTick();
 			await this.waitForImageMasker();
-			if(this.cancelled){
+			if(this.canceled){
 				return;
 			}
 			this.inBatch = true;

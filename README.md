@@ -1,9 +1,12 @@
 # Pixeldeck
 
-Pixeldeck is a local web app for cleaning up product photographs: crop the
-subject out of a white sweep, take the background away, upscale, inpaint,
-white-balance and brighten, or hand the image to an AI editor — all from one
-page, with undo.
+Pixeldeck is a local batch image post-processing and touch-up studio. Drop a
+folder of photographs on it and work through them together: crop the subject out
+of a white sweep, take the background away, upscale, inpaint, white-balance and
+brighten, or hand an image to an AI editor. It was built for product
+photography, but nothing in it is specific to that — any batch of images you
+need to clean up will do. Everything is undoable, and there is a single-image
+page for one-off work.
 
 It runs on your own machine. The heavy work is done by small standalone Rust
 binaries that Pixeldeck downloads on install and runs as subprocesses, so there
@@ -27,8 +30,8 @@ a network.
 | Inpainting | local LaMa, with optional tile and section modes; AILabTools erasure |
 | Background Removal | local RMBG-2.0; Pixian; AILabTools; Replicate rembg, modnet, dis |
 | Auto-Crop | local LocateAnything-3B, prompted for single items, kits or light items |
-| Contrast | local exposure fusion, adaptive enhancement, white balance, gamma correction; AILabTools contrast |
-| Enhance | AILabTools sharpness, dehaze and colour; Replicate scunet, NAFNet, night enhancement |
+| Contrast | local exposure fusion, adaptive enhancement, white balance and gamma correction — tone and luminance, not only color; AILabTools contrast |
+| Enhance | AILabTools sharpness, dehaze and color; Replicate scunet, NAFNet, night enhancement |
 | AI Edit | Gemini image models, [OI] image models |
 | Maxim | Replicate's Maxim models (denoise, deblur, derain, dehaze, low-light) |
 
@@ -73,7 +76,7 @@ engines that publish them, or built by the scripts those engines ship.
 | `--service` | install and enable the systemd user unit |
 | `--force` | re-download everything |
 
-RMBG-2.0 is behind a licence gate on Hugging Face. Accept its terms on the
+RMBG-2.0 is behind a license gate on Hugging Face. Accept its terms on the
 model page, then let the installer ask you for a read token on the terminal —
 the token is passed straight to the downloader and is not written anywhere.
 Ctrl-C is safe at any point: an aborted download is reported and the install
@@ -160,7 +163,7 @@ All of them are GPU tools when a GPU is present, so only one may run at a time:
 they are serialized by a single process-wide lock in `gpu_guard.py`, which is
 enough because the server is the only thing that ever starts them.
 
-Sources, versions and licences are in
+Sources, versions and licenses are in
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ## Layout
@@ -186,9 +189,12 @@ A plugin is a Python module in `plugins/` (or in the git-ignored
 `plugins/private/`) with a `setup(app, route, get_config)` function that can
 register extra routes. A `plugins/<name>.js` next to it is concatenated into
 `/pixeldeck/plugins.js` and loaded by the page, so a plugin can add UI as well
-as endpoints. See [plugins/README.md](plugins/README.md).
+as endpoints. On the page it is handed a small api —
+`addMenuComponent()` for the menubar, `addImageControl()` for the controls
+under each thumbnail — so everything a plugin needs lives in the plugin. See
+[plugins/README.md](plugins/README.md).
 
-## Licence
+## License
 
 MIT, see [LICENSE](LICENSE). The engines and models it downloads, the vendored
 front-end libraries, and the optional cloud services all have their own terms:

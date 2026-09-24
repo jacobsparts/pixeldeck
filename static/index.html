@@ -221,6 +221,12 @@ class EventBus {
 }
 const eventBus = new EventBus();
 
+// Extension points for plugins, filled by the api handed to each plugin below
+// and rendered by the template: menu components go in the menubar, image
+// controls under each thumbnail. See plugins/README.md.
+const pluginMenuComponents = [];
+const pluginImageControls = [];
+
 const app = {
         setup(){
                 return { eventBus };
@@ -246,20 +252,14 @@ const app = {
                 paneFields: null,
                 paneProvider: '',
                 paneApp: '',
-                pluginComponents: [],
+                pluginComponents: pluginMenuComponents,
+                pluginImageControls: pluginImageControls,
                 options: {},
         }},
         components: { 'pixeldeck-editor': pixeldeckEditor, 'dropdown-menu': dropdownMenu },
                 async created(){
                 fetch('/pixeldeck/schema').then(r=>r.json()).then(json=>{ this.schema = json; });
                 const params = new URLSearchParams(window.location.search);
-                if(window.location.search){
-                        let urls = params.get("urls");
-                        if(urls){
-                                urls = JSON.parse(urls);
-                                this.load_urls(urls);
-                        }
-                }
                 const savedConcurrency = localStorage.getItem('pixelpipe_concurrency') || params.get("concurrency");
                 if(savedConcurrency){
                         const parsed = parseInt(savedConcurrency, 10);
@@ -320,37 +320,6 @@ const app = {
                 },
         },
         methods: {
-                async load_urls(urls){
-                        for(const url of urls){
-                                try {
-                                        const resp = await fetch('/pixeldeck/fetch?url='+encodeURIComponent(url));
-                                        const blob = await resp.blob();
-                                        const image = {
-                                                file: blob,
-                                                filename: 'image',
-                                                thumbnailURL: null,
-                                                width: null,
-                                                height: null,
-                                                busy: false,
-                                                queued: false,
-                                                processing: false,
-                                                error: false,
-                                                editorMounted: false,
-                                                gridBusy: false,
-
-                                                history: [],
-                                                future: [],
-                                                id: this.imageid,
-                                                checked: true,
-                                        };
-                                        this.images.push(image);
-                                        this.queueThumbnail(image);
-                                        this.imageid++;
-                                } catch(error) {
-                                        alert(error);
-                                }
-                        }
-                },
                 async load_images(e){
                         for(const file of e.target.files){
                                 const filename = file.name.slice(0, file.name.lastIndexOf('.'));
@@ -747,7 +716,7 @@ const app = {
                         <div v-if="image.width && image.height" class="thumb-dim">{{ image.width }}×{{ image.height }}</div>
                         <div class="thumb-controls">
                                 <a @click="download_one(image, i)">⬇</a>
-                                <a @click="post_one(image, i)" v-if="typeof post_one === 'function' && session_id" title="Post to URL">⇧</a>
+                                <component v-for="(comp, idx) in pluginImageControls" :key="idx" :is="comp" :app="this" :image="image" :index="i" />
                                 <a @click="removeImage(i)">✖</a>
                         </div>
                 </div>
@@ -785,7 +754,11 @@ const app = {
 </div>`
 };
 if (window.pixeldeckPlugins) {
-        window.pixeldeckPlugins.forEach(p => typeof p === 'function' ? p(app) : p.install?.(app));
+        const pluginApi = {
+                addMenuComponent: component => pluginMenuComponents.push(component),
+                addImageControl: component => pluginImageControls.push(component),
+        };
+        window.pixeldeckPlugins.forEach(p => typeof p === 'function' ? p(app, pluginApi) : p.install?.(app, pluginApi));
 }
 const _app = Vue.createApp(app);
 _app.config.compilerOptions.isCustomElement = (tag) => {

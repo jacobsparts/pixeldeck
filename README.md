@@ -8,7 +8,7 @@ page, with undo.
 It runs on your own machine. The heavy work is done by small standalone Rust
 binaries that Pixeldeck downloads on install and runs as subprocesses, so there
 is no Python image-processing stack to fight with and no build step for the
-front end. Those engines are built on
+front end. The inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
 toolkit: hand-written CUDA kernels with matching pure-Rust implementations, and
 a driver layer `dlopen`ed at run time. They need nothing at run time but libc
@@ -142,12 +142,14 @@ can run them by hand the same way.
 | LocateAnything-3B | [locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | `locate-anything` | `models/locate-anything-allq8_0.laqt` | Auto-Crop |
 | OpenCE exposure fusion, IAGCWD, white balance | [adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |
 
-They are all built on [lightgpu](https://github.com/jacobsparts/lightgpu), our
-dependency-light CUDA toolkit for inference engines: the CUDA driver API is
-`dlopen`ed at run time, and every CUDA kernel has a matching pure-Rust
-implementation, so `--no-default-features` yields a CPU build with no CUDA
-toolchain at all. What that buys you is in `ldd` — the binaries link against
-nothing but libc (plus the driver, if there is one):
+The four inference engines are built on
+[lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
+toolkit for inference engines: the CUDA driver API is `dlopen`ed at run time,
+and every CUDA kernel has a matching pure-Rust implementation, so
+`--no-default-features` yields a CPU build with no CUDA toolchain at all. The
+contrast tools are plain Rust, with no CUDA in them. What that buys you is in
+`ldd` — the binaries link against nothing but libc (plus the driver, if there is
+one):
 
 ```console
 $ ldd bin/realesrgan-linux-x86_64

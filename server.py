@@ -134,6 +134,17 @@ put = lambda path: route("PUT", path)
 
 @get('/')
 async def root(request):
+    """Send a direct visitor to the app, which lives under /pixeldeck/.
+
+    Behind nginx the root belongs to nginx; this is for anyone who reaches the
+    server's own port.
+    """
+    raise web.HTTPFound('/pixeldeck/')
+
+
+@get('/pixeldeck')
+async def index_no_slash(request):
+    # The path without its trailing slash, which is what people type.
     raise web.HTTPFound('/pixeldeck/')
 
 

@@ -8,6 +8,19 @@ photography, but nothing in it is specific to that — any batch of images you
 need to clean up will do. Everything is undoable, and there is a single-image
 page for one-off work.
 
+Four photographs off the camera, the kind Pixeldeck is meant for: uneven light,
+grey paper, no framing.
+
+![the batch editor holding four raw photographs, each shown at its original
+size](docs/photo-box-before.png)
+
+The same four after Exposure Fusion and the Photo Box routine, which runs
+auto-crop, background removal, a crop to the subject and a resize to 2048 in
+one go:
+
+![the same four photographs cut out, straightened and resized to
+2048x2048](docs/photo-box-after.png)
+
 It runs on your own machine. The heavy work is done by small standalone Rust
 binaries that Pixeldeck downloads on install and runs as subprocesses, so there
 is no Python image-processing stack to fight with and no build step for the

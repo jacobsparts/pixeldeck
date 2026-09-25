@@ -159,9 +159,10 @@ can run them by hand the same way.
 | BiRefNet / RMBG-2.0 | [rmbg-rs](https://github.com/jacobsparts/rmbg-rs) | `rmbg-linux-x86_64` | `models/RMBG-2.0.safetensors` | Background Removal |
 | LocateAnything-3B | [locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | `locate-anything` | `models/locate-anything-allq8_0.laqt` | Auto-Crop |
 | NAFNet | [nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | `nafnet-linux-x86_64` | `models/nafnet-*.safetensors` | Enhance |
+| MAXIM | [maxim-rs](https://github.com/jacobsparts/maxim-rs) | `maxim-linux-x86_64` | `models/maxim-lol.safetensors` | Low-light enhancement |
 | OpenCE exposure fusion, IAGCWD, white balance | [adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |
 
-The five inference engines are built on
+The six inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
 toolkit for inference engines: the CUDA driver API is `dlopen`ed at run time,
 and every CUDA kernel has a matching pure-Rust implementation, so

@@ -19,12 +19,25 @@ RMBG_BIN = os.path.join(BIN_DIR, 'rmbg-linux-x86_64')
 RMBG_WEIGHTS = os.path.join(BIN_DIR, 'models', 'RMBG-2.0.safetensors')
 REALESRGAN_BIN = os.path.join(BIN_DIR, 'realesrgan-linux-x86_64')
 REALESRGAN_MODELS_DIR = os.path.join(BIN_DIR, 'models')
+NAFNET_BIN = os.path.join(BIN_DIR, 'nafnet-linux-x86_64')
 
 SUPER_RESOLUTION_MODELS = {
     'RealESRGAN x2plus': ('RealESRGAN_x2plus.safetensors', 2),
     'RealESRGAN x4plus': ('RealESRGAN_x4plus.safetensors', 4),
     'RealESRNet x4plus': ('RealESRNet_x4plus.safetensors', 4),
     '4x-RealisticRescaler': ('4x_RealisticRescaler_100000_G.safetensors', 4),
+}
+
+# NAFNet: the checkpoint alone picks both the task and the width (32 = the
+# speed model, 64 = the quality one), so the menu labels say which is which and
+# this table says which file each label means. The five weights the engine
+# publishes are all here; the width-32 quality gap is what the 64s buy.
+NAFNET_MODELS = {
+    'NAFNet Deblur (fast)': 'nafnet-gopro-width32.safetensors',
+    'NAFNet Deblur (best)': 'nafnet-gopro-width64.safetensors',
+    'NAFNet Denoise (fast)': 'nafnet-sidd-width32.safetensors',
+    'NAFNet Denoise (best)': 'nafnet-sidd-width64.safetensors',
+    'NAFNet Video Deblur (best)': 'nafnet-reds-width64.safetensors',
 }
 
 def _run_png_filter(binary, label, image_bin, args=()):
@@ -58,6 +71,13 @@ def run_iagcwd(image_bin, args=()):
 
 def run_white_balance(image_bin, args=()):
     return _run_png_filter(WHITE_BALANCE_BIN, 'white-balance', image_bin, args)
+
+def run_nafnet(image_bin, model):
+    if model not in NAFNET_MODELS:
+        raise RuntimeError(f'unhandled NAFNet model: {model}')
+    weights = os.path.join(REALESRGAN_MODELS_DIR, NAFNET_MODELS[model])
+    with gpu_guard.gpu_lock:
+        return _run_png_filter(NAFNET_BIN, 'nafnet', image_bin, ['-m', weights])
 
 def _sr_decode_png(image_bin):
     try:
@@ -184,7 +204,6 @@ def run_rmbg(image_bin):
             cmd = [
                 RMBG_BIN,
                 '--weights', RMBG_WEIGHTS,
-                '--device', 'gpu',
                 '-i', in_path,
                 '-o', out_path,
             ]
@@ -230,6 +249,12 @@ async def go_local(request, post, deliver_bin_image):
         image_bin = post['image'].file.read()
         loop = asyncio.get_event_loop()
         bin_image = await loop.run_in_executor(None, run_super_resolution, image_bin, post['model'])
+        await deliver_bin_image(bin_image)
+        return
+    if post['model'] in NAFNET_MODELS:
+        image_bin = post['image'].file.read()
+        loop = asyncio.get_event_loop()
+        bin_image = await loop.run_in_executor(None, run_nafnet, image_bin, post['model'])
         await deliver_bin_image(bin_image)
         return
     if post['model'] in (
@@ -301,6 +326,19 @@ def register_provider(register, get_config):
                 'Gamma Correction',
             ],
             'default': 'Exposure Fusion',
+        },
+    })(handler)
+
+    register('local', 'Enhance', {
+        'model': {
+            'options': [
+                'NAFNet Deblur (fast)',
+                'NAFNet Deblur (best)',
+                'NAFNet Denoise (fast)',
+                'NAFNet Denoise (best)',
+                'NAFNet Video Deblur (best)',
+            ],
+            'default': 'NAFNet Deblur (fast)',
         },
     })(handler)
 

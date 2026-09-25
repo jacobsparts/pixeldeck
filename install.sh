@@ -24,6 +24,7 @@ REALESRGAN_VERSION=v0.1.0
 LAMA_VERSION=v0.2.4
 RMBG_VERSION=v0.1.0
 LOCATE_VERSION=v0.1.0
+NAFNET_VERSION=v0.2.0
 ENHANCE_VERSION=v0.1.0
 
 CPU_ONLY=0
@@ -155,6 +156,8 @@ engine rmbg-linux-x86_64 \
     "$(github rmbg-rs "$RMBG_VERSION" "rmbg-linux-x86_64$suffix")"
 engine locate-anything \
     "$(github locate-anything-rs "$LOCATE_VERSION" "locate-anything-linux-x86_64$suffix")"
+engine nafnet-linux-x86_64 \
+    "$(github nafnet-rs "$NAFNET_VERSION" "nafnet-linux-x86_64$suffix")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"
@@ -174,6 +177,16 @@ done
 # lama-inpaint-rs.
 fetch "$(github lama-inpaint-rs "$LAMA_VERSION" big-lama.safetensors)" \
       "$MODEL_DIR/big-lama.safetensors"
+
+# NAFNet: deblurring and denoising. The checkpoint alone decides the task and
+# the width, so the engine takes no flag for either: `-m` is the whole
+# configuration. The width-32 files are the speed models and the width-64 ones
+# the quality models, which is how the menus label them.
+for weights in nafnet-gopro-width32.safetensors nafnet-gopro-width64.safetensors \
+               nafnet-sidd-width32.safetensors nafnet-sidd-width64.safetensors \
+               nafnet-reds-width64.safetensors; do
+    fetch "$(github nafnet-rs "$NAFNET_VERSION" "$weights")" "$MODEL_DIR/$weights"
+done
 
 # ------------------------------------------------------- gated / built models
 #

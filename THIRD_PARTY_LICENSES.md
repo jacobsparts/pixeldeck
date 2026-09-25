@@ -23,7 +23,7 @@ These are checked into `static/` and served as-is.
 `install.sh` downloads prebuilt binaries from the release pages of these
 repositories. They are not distributed with Pixeldeck.
 
-The four inference engines are built on
+The five inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
 toolkit for inference engines: hand-written CUDA kernels with matching pure-Rust
 implementations, and a driver layer that is `dlopen`ed at run time. The contrast
@@ -37,6 +37,7 @@ toolkit, no cuDNN, no PyTorch, no Python.
 | LaMa inpainting | [jacobsparts/lama-inpaint-rs](https://github.com/jacobsparts/lama-inpaint-rs) | Apache-2.0 |
 | RMBG-2.0 background removal | [jacobsparts/rmbg-rs](https://github.com/jacobsparts/rmbg-rs) | MIT (c) 2026 Jacob Stoner |
 | LocateAnything detection | [jacobsparts/locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | MIT (c) 2026 Ettore Di Giacinto and the LocalAI team |
+| NAFNet deblurring and denoising | [jacobsparts/nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | MIT (c) 2026 Jacob Stoner |
 | exposure, tone and color correction | [jacobsparts/adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | MIT (c) 2017 Zhenqiang Ying |
 
 `adaptive-enhance` is a port of the `adaptiveImageEnhancement` module of
@@ -47,7 +48,9 @@ attribution and is included in its release tarball.
 
 `lama-inpaint-rs` reimplements the [saicinpainting](https://github.com/advimman/lama)
 network; `rmbg-rs` reimplements the BiRefNet architecture, whose Swin
-Transformer backbone is MIT-licensed (Microsoft Research).
+Transformer backbone is MIT-licensed (Microsoft Research); `nafnet-rs`
+reimplements [NAFNet](https://github.com/megvii-research/NAFNet) (MIT,
+(c) 2022 megvii-model).
 
 ## Model weights
 
@@ -62,6 +65,7 @@ for non-commercial use only — read the terms before you download them.
 | big-lama | Inpainting | Apache-2.0, [saicinpainting](https://github.com/advimman/lama) |
 | RMBG-2.0 | Background Removal | **non-commercial only**, (c) [BRIA](https://bria.ai) — [model card](https://huggingface.co/briaai/RMBG-2.0) |
 | LocateAnything-3B | Auto-Crop | **non-commercial research and evaluation only**, NVIDIA — [model card](https://huggingface.co/nvidia/LocateAnything-3B) |
+| NAFNet-GoPro / NAFNet-REDS / NAFNet-SIDD, widths 32 and 64 | Enhance | MIT, (c) 2022 megvii-model ([NAFNet](https://github.com/megvii-research/NAFNet)), converted to `.safetensors` |
 
 ## Image APIs
 

@@ -20,7 +20,7 @@ from aiohttp.web_exceptions import HTTPException
 
 import config
 from plugins import PRIVATE_DIR, PLUGINS_DIR, load_plugins
-from providers import register_all_providers
+from providers import EngineError, register_all_providers
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(SCRIPT_DIR, 'static')
@@ -199,6 +199,13 @@ async def process(request):
         return web.Response(body=delivery.body, content_type=delivery.content_type)
     except HTTPException:
         raise
+    # AN ENGINE'S OWN EXPLANATION IS SHOWN AS IT STANDS. It is written for the
+    # person looking at the editor - what it could not do, what it needed, what
+    # would fit - and prefixing it with `EngineError: ` would only tell them
+    # about a class they cannot see. Every other exception keeps its type,
+    # because that one IS an internal fault and the type is the useful part.
+    except EngineError as e:
+        return web.Response(status=500, text=str(e))
     except Exception as e:
         return web.Response(status=500, text=f'{type(e).__name__}: {e}')
 

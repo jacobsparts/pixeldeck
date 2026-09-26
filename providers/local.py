@@ -7,6 +7,7 @@ from aiohttp import web
 from PIL import Image, ImageOps
 
 import gpu_guard
+from providers import EngineError
 
 SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BIN_DIR = os.path.join(SCRIPT_DIR, 'bin')
@@ -40,6 +41,29 @@ NAFNET_MODELS = {
     'NAFNet Video Deblur (best)': 'nafnet-reds-width64.safetensors',
 }
 
+def _engine_message(label, code, stderr):
+    """What an engine said that is worth showing a user, and nothing else.
+
+    Every engine in this project prefixes its own lines with its own name -
+    `nafnet: not enough device memory for a 2048x2048 pass` - so those lines ARE
+    the engine talking to whoever is looking at the editor, and the prefix is
+    dropped so they read as sentences. Anything else on stderr is a panic, a
+    loader message or a build detail, none of which belongs in front of a user;
+    the last such line is kept only when there was no prefixed line at all,
+    because a segfault still has to say something.
+    """
+    said = []
+    for line in stderr.splitlines():
+        head, sep, rest = line.rstrip().partition(': ')
+        if sep and rest and head.islower() and ' ' not in head:
+            said.append(rest)
+    if said:
+        return '\n'.join(said[:6])
+    tail = [ln.strip() for ln in stderr.splitlines() if ln.strip()]
+    detail = f' - {tail[-1]}' if tail else ''
+    return f'{label} failed (exit code {code}){detail}'
+
+
 def _run_png_filter(binary, label, image_bin, args=()):
     """Pipe a PNG through one of the adaptive-enhance binaries."""
     if not image_bin.startswith(b'\x89PNG\r\n\x1a\n'):
@@ -60,7 +84,7 @@ def _run_png_filter(binary, label, image_bin, args=()):
     )
     if proc.returncode != 0:
         err = proc.stderr.decode(errors='replace')
-        raise RuntimeError(f'{label} failed (code {proc.returncode}): {err}')
+        raise EngineError(_engine_message(label, proc.returncode, err))
     return proc.stdout
 
 def run_adaptive_enhance(image_bin, args=()):

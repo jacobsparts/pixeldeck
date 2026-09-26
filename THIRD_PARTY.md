@@ -15,7 +15,7 @@ privacy policies apply to that request.
 | [OI] | `openai` | `api.openai.com` | AI Edit |
 | [AILabTools] | `ailabtools` | `www.ailabapi.com` | Super Resolution, Inpainting, Background Removal |
 | [Pixian.AI] | `pixian` | `api.pixian.ai` | Background Removal |
-| [Replicate] | `replicate` | `api.replicate.com` | Super Resolution, Background Removal, Enhance, Maxim |
+| [Replicate] | `replicate` | `api.replicate.com` | Super Resolution, Background Removal, Enhance |
 
 The keys are read from `config.json` for each request and are only sent to the
 provider they belong to, as an `Authorization` or `x-api-key` header. Nothing

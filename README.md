@@ -46,7 +46,7 @@ somewhere else. It has no authentication of its own.
 | Contrast | local exposure fusion, adaptive enhancement, white balance and gamma correction — tone and luminance, not only color |
 | Enhance | local NAFNet, deblurring and denoising; Replicate scunet, night enhancement |
 | AI Edit | Gemini image models, [OI] image models |
-| Maxim | Replicate's Maxim models (denoise, deblur, derain, dehaze, low-light) |
+| Maxim | local MAXIM, eleven checkpoints: low-light, enhancement, denoise, deblur, derain and dehaze |
 
 Photo Box 2048 runs the whole product-photo sequence in one go: auto-crop, then
 background removal, then a crop to the subject and a resize to 2048.
@@ -60,18 +60,18 @@ to the mask, undo and redo, PNG and JPG export.
 - Linux on x86_64
 - Python 3.10 or newer, with `venv`
 - `curl`
-- About 2.6 GB of disk, or about 6.8 GB with Auto-Crop (whose model is built
+- About 3.4 GB of disk, or about 7.6 GB with Auto-Crop (whose model is built
   from a 7.7 GB download, so that step wants ~13 GB free)
 
-A GPU is optional. The five inference engines are CUDA builds that probe the
+A GPU is optional. The six inference engines are CUDA builds that probe the
 driver at start-up and fall back to the CPU backend, so they work either way;
 run `./install.sh --cpu-only` to fetch the smaller CPU-only builds instead. The
 contrast tools are plain Rust and need no GPU at all.
 
 The inference engines process a whole image at once, so their memory grows with
-the image and they size the pass before they start it. NAFNet fits on an 8 GB
-card at every size the editor produces, including the 2048x2048 that Photo Box
-2048 outputs. A pass that will not fit is **refused before it allocates
+the image and they size the pass before they start it. NAFNet and MAXIM both fit
+on an 8 GB card at every size the editor produces, including the 2048x2048 that
+Photo Box 2048 outputs. A pass that will not fit is **refused before it allocates
 anything**, with the numbers, rather than failing part-way through:
 
 ```console
@@ -180,7 +180,7 @@ can run them by hand the same way.
 | BiRefNet / RMBG-2.0 | [rmbg-rs](https://github.com/jacobsparts/rmbg-rs) | `rmbg-linux-x86_64` | `models/RMBG-2.0.safetensors` | Background Removal |
 | LocateAnything-3B | [locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | `locate-anything` | `models/locate-anything-allq8_0.laqt` | Auto-Crop |
 | NAFNet | [nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | `nafnet-linux-x86_64` | `models/nafnet-*.safetensors` | Enhance |
-| MAXIM | [maxim-rs](https://github.com/jacobsparts/maxim-rs) | `maxim-linux-x86_64` | `models/maxim-lol.safetensors` | Low-light enhancement |
+| MAXIM | [maxim-rs](https://github.com/jacobsparts/maxim-rs) | `maxim-linux-x86_64` | `models/maxim-*.safetensors` | Maxim (low-light, enhancement, denoise, deblur, derain, dehaze) |
 | OpenCE exposure fusion, IAGCWD, white balance | [adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |
 
 The six inference engines are built on
@@ -197,7 +197,7 @@ $ ldd bin/realesrgan-linux-x86_64
         linux-vdso.so.1  libgcc_s.so.1  libm.so.6  libc.so.6
 ```
 
-The five inference engines are GPU tools when a GPU is present, so only one may
+The six inference engines are GPU tools when a GPU is present, so only one may
 run at a time: they are serialized by a single process-wide lock in
 `gpu_guard.py`, which is enough because the server is the only thing that ever
 starts them.

@@ -38,6 +38,7 @@ toolkit, no cuDNN, no PyTorch, no Python.
 | RMBG-2.0 background removal | [jacobsparts/rmbg-rs](https://github.com/jacobsparts/rmbg-rs) | MIT (c) 2026 Jacob Stoner |
 | LocateAnything detection | [jacobsparts/locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | MIT (c) 2026 Ettore Di Giacinto and the LocalAI team |
 | NAFNet deblurring and denoising | [jacobsparts/nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | MIT (c) 2026 Jacob Stoner |
+| MAXIM restoration | [jacobsparts/maxim-rs](https://github.com/jacobsparts/maxim-rs) | MIT (c) 2026 Jacob Stoner; an independent reimplementation of [google-research/maxim](https://github.com/google-research/maxim) (Apache-2.0, (c) 2022 Google LLC) |
 | exposure, tone and color correction | [jacobsparts/adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | MIT (c) 2017 Zhenqiang Ying |
 
 `adaptive-enhance` is a port of the `adaptiveImageEnhancement` module of
@@ -66,6 +67,7 @@ for non-commercial use only — read the terms before you download them.
 | RMBG-2.0 | Background Removal | **non-commercial only**, (c) [BRIA](https://bria.ai) — [model card](https://huggingface.co/briaai/RMBG-2.0) |
 | LocateAnything-3B | Auto-Crop | **non-commercial research and evaluation only**, NVIDIA — [model card](https://huggingface.co/nvidia/LocateAnything-3B) |
 | NAFNet-GoPro / NAFNet-REDS / NAFNet-SIDD, widths 32 and 64 | Enhance | MIT, (c) 2022 megvii-model ([NAFNet](https://github.com/megvii-research/NAFNet)), converted to `.safetensors` |
+| maxim-lol, -fivek, -sidd, -gopro, -reds, -realblur-j, -realblur-r, -rain13k, -raindrop, -sots-indoor, -sots-outdoor | Maxim | Apache-2.0, (c) 2022 Google LLC ([MAXIM](https://github.com/google-research/maxim)), converted to `.safetensors` |
 
 ## Image APIs
 

@@ -21,6 +21,7 @@ RMBG_WEIGHTS = os.path.join(BIN_DIR, 'models', 'RMBG-2.0.safetensors')
 REALESRGAN_BIN = os.path.join(BIN_DIR, 'realesrgan-linux-x86_64')
 REALESRGAN_MODELS_DIR = os.path.join(BIN_DIR, 'models')
 NAFNET_BIN = os.path.join(BIN_DIR, 'nafnet-linux-x86_64')
+MAXIM_BIN = os.path.join(BIN_DIR, 'maxim-linux-x86_64')
 
 SUPER_RESOLUTION_MODELS = {
     'RealESRGAN x2plus': ('RealESRGAN_x2plus.safetensors', 2),
@@ -39,6 +40,24 @@ NAFNET_MODELS = {
     'NAFNet Denoise (fast)': 'nafnet-sidd-width32.safetensors',
     'NAFNet Denoise (best)': 'nafnet-sidd-width64.safetensors',
     'NAFNet Video Deblur (best)': 'nafnet-reds-width64.safetensors',
+}
+
+# MAXIM: eleven checkpoints, one per task and dataset, and the file alone picks
+# the architecture - a two-stage model for enhancement, deraining and dehazing,
+# a three-stage one for denoising and deblurring. So the menu labels name the
+# task and the dataset, and this table says which file each label means.
+MAXIM_MODELS = {
+    'Maxim Low-light (LOL)': 'maxim-lol.safetensors',
+    'Maxim Enhance (FiveK)': 'maxim-fivek.safetensors',
+    'Maxim Denoise (SIDD)': 'maxim-sidd.safetensors',
+    'Maxim Deblur (GoPro)': 'maxim-gopro.safetensors',
+    'Maxim Deblur (REDS)': 'maxim-reds.safetensors',
+    'Maxim Deblur (RealBlur-R)': 'maxim-realblur-r.safetensors',
+    'Maxim Deblur (RealBlur-J)': 'maxim-realblur-j.safetensors',
+    'Maxim Derain (Rain13k)': 'maxim-rain13k.safetensors',
+    'Maxim Derain (Raindrop)': 'maxim-raindrop.safetensors',
+    'Maxim Dehaze (Indoor)': 'maxim-sots-indoor.safetensors',
+    'Maxim Dehaze (Outdoor)': 'maxim-sots-outdoor.safetensors',
 }
 
 def _engine_message(label, code, stderr):
@@ -102,6 +121,13 @@ def run_nafnet(image_bin, model):
     weights = os.path.join(REALESRGAN_MODELS_DIR, NAFNET_MODELS[model])
     with gpu_guard.gpu_lock:
         return _run_png_filter(NAFNET_BIN, 'nafnet', image_bin, ['-m', weights])
+
+def run_maxim(image_bin, model):
+    if model not in MAXIM_MODELS:
+        raise RuntimeError(f'unhandled Maxim model: {model}')
+    weights = os.path.join(REALESRGAN_MODELS_DIR, MAXIM_MODELS[model])
+    with gpu_guard.gpu_lock:
+        return _run_png_filter(MAXIM_BIN, 'maxim', image_bin, ['-m', weights])
 
 def _sr_decode_png(image_bin):
     try:
@@ -281,6 +307,12 @@ async def go_local(request, post, deliver_bin_image):
         bin_image = await loop.run_in_executor(None, run_nafnet, image_bin, post['model'])
         await deliver_bin_image(bin_image)
         return
+    if post['model'] in MAXIM_MODELS:
+        image_bin = post['image'].file.read()
+        loop = asyncio.get_event_loop()
+        bin_image = await loop.run_in_executor(None, run_maxim, image_bin, post['model'])
+        await deliver_bin_image(bin_image)
+        return
     if post['model'] in (
         'Exposure Fusion',
         'Exposure Fusion Knee 0.95',
@@ -363,6 +395,25 @@ def register_provider(register, get_config):
                 'NAFNet Video Deblur (best)',
             ],
             'default': 'NAFNet Deblur (fast)',
+        },
+    })(handler)
+
+    register('local', 'Maxim', {
+        'model': {
+            'options': [
+                'Maxim Low-light (LOL)',
+                'Maxim Enhance (FiveK)',
+                'Maxim Denoise (SIDD)',
+                'Maxim Deblur (GoPro)',
+                'Maxim Deblur (REDS)',
+                'Maxim Deblur (RealBlur-R)',
+                'Maxim Deblur (RealBlur-J)',
+                'Maxim Derain (Rain13k)',
+                'Maxim Derain (Raindrop)',
+                'Maxim Dehaze (Indoor)',
+                'Maxim Dehaze (Outdoor)',
+            ],
+            'default': 'Maxim Low-light (LOL)',
         },
     })(handler)
 

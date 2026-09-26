@@ -25,6 +25,7 @@ LAMA_VERSION=v0.2.4
 RMBG_VERSION=v0.1.0
 LOCATE_VERSION=v0.1.0
 NAFNET_VERSION=v0.2.0
+MAXIM_VERSION=v0.2.0
 ENHANCE_VERSION=v0.1.0
 
 CPU_ONLY=0
@@ -158,6 +159,8 @@ engine locate-anything \
     "$(github locate-anything-rs "$LOCATE_VERSION" "locate-anything-linux-x86_64$suffix")"
 engine nafnet-linux-x86_64 \
     "$(github nafnet-rs "$NAFNET_VERSION" "nafnet-linux-x86_64$suffix")"
+engine maxim-linux-x86_64 \
+    "$(github maxim-rs "$MAXIM_VERSION" "maxim-linux-x86_64$suffix")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"
@@ -186,6 +189,19 @@ for weights in nafnet-gopro-width32.safetensors nafnet-gopro-width64.safetensors
                nafnet-sidd-width32.safetensors nafnet-sidd-width64.safetensors \
                nafnet-reds-width64.safetensors; do
     fetch "$(github nafnet-rs "$NAFNET_VERSION" "$weights")" "$MODEL_DIR/$weights"
+done
+
+# MAXIM: enhancement, denoising, deblurring, deraining and dehazing. Each
+# checkpoint carries its own architecture in its header - the enhancement,
+# deraining and dehazing ones are two-stage, the denoising and deblurring ones
+# three-stage - so `-m` is the whole configuration and the eleven files are what
+# fills the Maxim menu.
+for weights in maxim-lol.safetensors maxim-fivek.safetensors maxim-sidd.safetensors \
+               maxim-gopro.safetensors maxim-reds.safetensors \
+               maxim-realblur-r.safetensors maxim-realblur-j.safetensors \
+               maxim-rain13k.safetensors maxim-raindrop.safetensors \
+               maxim-sots-indoor.safetensors maxim-sots-outdoor.safetensors; do
+    fetch "$(github maxim-rs "$MAXIM_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
 
 # ------------------------------------------------------- gated / built models

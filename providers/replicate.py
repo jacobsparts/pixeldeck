@@ -114,17 +114,6 @@ async def go_replicate(request, post, deliver_bin_image, api_token):
             'scunet (denoise)': { "version": "3a005085d7b53f65b4c3ee70c17a565a046c8230ea0e599b52a512702bba689d", "input": { "image": url } },
             'ifan-defocus-deblur': { "version": "efdf547cf20ce745c11d0442345ef130f14654b9d03c6e9389201a08b5e679ee", "input": { "image": url } },
             'night-enhancement': { "version": "3c0aa136005ae6587c693a393e8e29a4a7541f6f69527cf634ff1f32a77764d8", "input": { "image": url } },
-            'Image Denoising': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Denoising" } },
-            'Image Deblurring (GoPro)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Deblurring (GoPro)" } },
-            'Image Deblurring (REDS)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Deblurring (REDS)" } },
-            'Image Deblurring (RealBlur_R)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Deblurring (RealBlur_R)" } },
-            'Image Deblurring (RealBlur_J)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Deblurring (RealBlur_J)" } },
-            'Image Deraining (Rain streak)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Deraining (Rain streak)" } },
-            'Image Deraining (Rain drop)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Deraining (Rain drop)" } },
-            'Image Dehazing (Indoor)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Dehazing (Indoor)" } },
-            'Image Dehazing (Outdoor)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Dehazing (Outdoor)" } },
-            'Image Enhancement (Low-light)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Enhancement (Low-light)" } },
-            'Image Enhancement (Retouching)': { "version": "494514d816b8b0e8c85351f38e3e4a29a03b573a469a92446ee2a772591ba5a9", "input": { "image": url, "model": "Image Enhancement (Retouching)" } },
         }[model]
 
     image_bin = post['image'].file.read()
@@ -185,25 +174,6 @@ def register_provider(register, get_config):
                 'night-enhancement',
             ],
             'default': 'scunet (denoise)',
-        },
-    })(handler)
-
-    register('Replicate', 'Maxim', {
-        'model': {
-            'options': [
-                'Image Denoising',
-                'Image Deblurring (GoPro)',
-                'Image Deblurring (REDS)',
-                'Image Deblurring (RealBlur_R)',
-                'Image Deblurring (RealBlur_J)',
-                'Image Deraining (Rain streak)',
-                'Image Deraining (Rain drop)',
-                'Image Dehazing (Indoor)',
-                'Image Dehazing (Outdoor)',
-                'Image Enhancement (Low-light)',
-                'Image Enhancement (Retouching)',
-            ],
-            'default': 'Image Denoising',
         },
     })(handler)
 

@@ -68,6 +68,27 @@ driver at start-up and fall back to the CPU backend, so they work either way;
 run `./install.sh --cpu-only` to fetch the smaller CPU-only builds instead. The
 contrast tools are plain Rust and need no GPU at all.
 
+The inference engines process a whole image at once, so their memory grows with
+the image and they size the pass before they start it. NAFNet fits on an 8 GB
+card at every size the editor produces, including the 2048x2048 that Photo Box
+2048 outputs. A pass that will not fit is **refused before it allocates
+anything**, with the numbers, rather than failing part-way through:
+
+```console
+$ bin/nafnet-linux-x86_64 -m bin/models/nafnet-gopro-width32.safetensors -i 4k.png -o out.png
+nafnet: plan 24320 MiB (12032 activations + 12288 workspace), 7937 MiB free
+nafnet: not enough device memory for a 4096x4096 pass
+nafnet: the plan needs 24320 MiB (12032 activations + 12288 workspace); 7937 MiB is free
+nafnet: the plan is exact - it is what the driver would be asked for - so this is a hard limit, not a guess
+nafnet: a smaller image, a narrower checkpoint, or a freer card is what fits
+```
+
+Pixeldeck shows that text in the editor as it stands. There is deliberately no
+fallback from the GPU to the CPU on a memory failure: a silent switch to a
+multi-gigabyte host allocation is worse than an error, because a machine short of
+RAM does not fail, it swaps. The CPU backend is refused the same way when its
+footprint will not fit in the machine's available memory.
+
 ## Install
 
 ```console

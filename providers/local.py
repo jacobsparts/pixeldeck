@@ -23,6 +23,8 @@ REALESRGAN_MODELS_DIR = os.path.join(BIN_DIR, 'models')
 NAFNET_BIN = os.path.join(BIN_DIR, 'nafnet-linux-x86_64')
 MAXIM_BIN = os.path.join(BIN_DIR, 'maxim-linux-x86_64')
 SCUNET_BIN = os.path.join(BIN_DIR, 'scunet-linux-x86_64')
+IFAN_BIN = os.path.join(BIN_DIR, 'ifan-linux-x86_64')
+IFAN_WEIGHTS = os.path.join(BIN_DIR, 'models', 'IFAN.safetensors')
 
 SUPER_RESOLUTION_MODELS = {
     'RealESRGAN x2plus': ('RealESRGAN_x2plus.safetensors', 2),
@@ -181,6 +183,37 @@ def run_scunet(image_bin, model):
                 os.rmdir(tmpdir)
             except OSError:
                 pass
+
+# IFAN is the one engine here whose CPU-only build will not run from a bare
+# command line: every other engine picks its device at parse time
+# (`if cfg!(feature = "cuda") { "gpu" } else { "cpu" }`), so a --no-default-features
+# build falls back to its CPU path by itself, while IFAN answers the default with
+# "this build has no CUDA backend ...; pass --cpu". `install.sh --cpu-only` puts
+# exactly that binary in bin/, so the flag is needed there and is harmless
+# everywhere else. Detect it from the ONE message that means it, once, and
+# remember the answer rather than re-running the pass to find out again.
+_IFAN_WANTS_CPU = [False]
+
+def run_ifan(image_bin):
+    # IFAN restores a defocused photo by predicting a per-pixel filter tensor and
+    # applying it with an adaptive convolution, rather than predicting the image
+    # itself, so there is one checkpoint and no option to choose - `-m` is the
+    # whole configuration. It takes its PNG on stdin and writes it to stdout, so
+    # it needs no temporary directory; the GPU is used when a driver is there and
+    # the CPU path when it is not. `--cpu` is passed before `-m` because the flag
+    # position the engine accepts is `-m <weights> [--cpu]` and the weights path
+    # is the only argument that takes a value.
+    args = ['-m', IFAN_WEIGHTS]
+    if _IFAN_WANTS_CPU[0]:
+        args.append('--cpu')
+    with gpu_guard.gpu_lock:
+        try:
+            return _run_png_filter(IFAN_BIN, 'ifan', image_bin, args)
+        except EngineError as e:
+            if _IFAN_WANTS_CPU[0] or 'has no CUDA backend' not in str(e):
+                raise
+            _IFAN_WANTS_CPU[0] = True
+            return _run_png_filter(IFAN_BIN, 'ifan', image_bin, args + ['--cpu'])
 
 def _sr_decode_png(image_bin):
     try:
@@ -372,6 +405,12 @@ async def go_local(request, post, deliver_bin_image):
         bin_image = await loop.run_in_executor(None, run_scunet, image_bin, post['model'])
         await deliver_bin_image(bin_image)
         return
+    if post['model'] == 'IFAN Defocus Deblur':
+        image_bin = post['image'].file.read()
+        loop = asyncio.get_event_loop()
+        bin_image = await loop.run_in_executor(None, run_ifan, image_bin)
+        await deliver_bin_image(bin_image)
+        return
     if post['model'] in (
         'Exposure Fusion',
         'Exposure Fusion Knee 0.95',
@@ -457,6 +496,7 @@ def register_provider(register, get_config):
                 'SCUNet Denoise (sigma 15)',
                 'SCUNet Denoise (sigma 25)',
                 'SCUNet Denoise (sigma 50)',
+                'IFAN Defocus Deblur',
             ],
             'default': 'NAFNet Deblur (fast)',
         },

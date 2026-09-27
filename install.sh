@@ -27,6 +27,7 @@ LOCATE_VERSION=v0.1.0
 NAFNET_VERSION=v0.2.0
 MAXIM_VERSION=v0.2.0
 SCUNET_VERSION=v0.1.0
+IFAN_VERSION=v0.1.0
 ENHANCE_VERSION=v0.1.0
 
 CPU_ONLY=0
@@ -164,6 +165,8 @@ engine maxim-linux-x86_64 \
     "$(github maxim-rs "$MAXIM_VERSION" "maxim-linux-x86_64$suffix")"
 engine scunet-linux-x86_64 \
     "$(github scunet-rs "$SCUNET_VERSION" "scunet-linux-x86_64$suffix")"
+engine ifan-linux-x86_64 \
+    "$(github ifan-rs "$IFAN_VERSION" "ifan-linux-x86_64$suffix")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"
@@ -219,6 +222,11 @@ for weights in scunet-color-real-psnr.safetensors scunet-color-real-gan.safetens
                scunet-color-50.safetensors; do
     fetch "$(github scunet-rs "$SCUNET_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
+
+# IFAN: defocus deblurring, one checkpoint. The network predicts a filter tensor
+# rather than an image, so `-m` is the whole configuration here too.
+fetch "$(github ifan-rs "$IFAN_VERSION" IFAN.safetensors)" \
+      "$MODEL_DIR/IFAN.safetensors"
 
 # ------------------------------------------------------- gated / built models
 #

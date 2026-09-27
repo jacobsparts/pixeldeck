@@ -40,6 +40,7 @@ toolkit, no cuDNN, no PyTorch, no Python.
 | NAFNet deblurring and denoising | [jacobsparts/nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | MIT (c) 2026 Jacob Stoner |
 | MAXIM restoration | [jacobsparts/maxim-rs](https://github.com/jacobsparts/maxim-rs) | MIT (c) 2026 Jacob Stoner; an independent reimplementation of [google-research/maxim](https://github.com/google-research/maxim) (Apache-2.0, (c) 2022 Google LLC) |
 | SCUNet denoising | [jacobsparts/scunet-rs](https://github.com/jacobsparts/scunet-rs) | MIT (c) 2026 Jacob Stoner; an independent implementation of [cszn/SCUNet](https://github.com/cszn/SCUNet) (Apache-2.0, (c) Kai Zhang) |
+| IFAN defocus deblurring | [jacobsparts/ifan-rs](https://github.com/jacobsparts/ifan-rs) | MIT (c) 2026 Jacob Stoner for the engine; **AGPL-3.0** for `tools/` and the checkpoint, which are derived from the authors' release — see the note below |
 | exposure, tone and color correction | [jacobsparts/adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | MIT (c) 2017 Zhenqiang Ying |
 
 `adaptive-enhance` is a port of the `adaptiveImageEnhancement` module of
@@ -47,6 +48,16 @@ toolkit, no cuDNN, no PyTorch, no Python.
 exposure-fusion method; `iagcwd` implements the improved adaptive gamma
 correction of Cao et al., 2018. Its `NOTICE` file carries the original
 attribution and is included in its release tarball.
+
+`ifan-rs` is the one engine here whose parts are not all under the same license. Its
+own Rust and CUDA code is MIT, like the rest of the family, but `tools/convert.py`,
+`tools/reference.py` and the `IFAN.safetensors` checkpoint the install downloads
+are derived from the [codeslake/IFAN](https://github.com/codeslake/IFAN) release,
+which is **AGPL-3.0** (c) Junyong Lee, Hyeongseok Son, Jaesung Rim, Sunghyun Cho
+and Seungyong Lee, POSTECH. The engine repository carries the upstream license
+text in `MODEL_LICENSE-IFAN.txt` and says exactly which files it covers. Nothing
+else in Pixeldeck links against or redistributes it; the binary is a separate
+executable that reads a separate file.
 
 `lama-inpaint-rs` reimplements the [saicinpainting](https://github.com/advimman/lama)
 network; `rmbg-rs` reimplements the BiRefNet architecture, whose Swin
@@ -72,6 +83,7 @@ for non-commercial use only — read the terms before you download them.
 | NAFNet-GoPro / NAFNet-REDS / NAFNet-SIDD, widths 32 and 64 | Enhance | MIT, (c) 2022 megvii-model ([NAFNet](https://github.com/megvii-research/NAFNet)), converted to `.safetensors` |
 | maxim-lol, -fivek, -sidd, -gopro, -reds, -realblur-j, -realblur-r, -rain13k, -raindrop, -sots-indoor, -sots-outdoor | Maxim | Apache-2.0, (c) 2022 Google LLC ([MAXIM](https://github.com/google-research/maxim)), converted to `.safetensors` |
 | scunet-color-* (five) | Enhance (denoise) | Apache-2.0, (c) Kai Zhang ([SCUNet](https://github.com/cszn/SCUNet), released on the [KAIR](https://github.com/cszn/KAIR) releases page), converted to `.safetensors` |
+| IFAN | Enhance (defocus deblur) | **AGPL-3.0**, (c) Junyong Lee, Hyeongseok Son, Jaesung Rim, Sunghyun Cho and Seungyong Lee, POSTECH ([IFAN](https://github.com/codeslake/IFAN), CVPR 2021), converted to `.safetensors` — the one checkpoint here under a copyleft licence |
 
 ## Image APIs
 

@@ -23,7 +23,7 @@ These are checked into `static/` and served as-is.
 `install.sh` downloads prebuilt binaries from the release pages of these
 repositories. They are not distributed with Pixeldeck.
 
-The five inference engines are built on
+The seven inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
 toolkit for inference engines: hand-written CUDA kernels with matching pure-Rust
 implementations, and a driver layer that is `dlopen`ed at run time. The contrast
@@ -39,6 +39,7 @@ toolkit, no cuDNN, no PyTorch, no Python.
 | LocateAnything detection | [jacobsparts/locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | MIT (c) 2026 Ettore Di Giacinto and the LocalAI team |
 | NAFNet deblurring and denoising | [jacobsparts/nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | MIT (c) 2026 Jacob Stoner |
 | MAXIM restoration | [jacobsparts/maxim-rs](https://github.com/jacobsparts/maxim-rs) | MIT (c) 2026 Jacob Stoner; an independent reimplementation of [google-research/maxim](https://github.com/google-research/maxim) (Apache-2.0, (c) 2022 Google LLC) |
+| SCUNet denoising | [jacobsparts/scunet-rs](https://github.com/jacobsparts/scunet-rs) | MIT (c) 2026 Jacob Stoner; an independent implementation of [cszn/SCUNet](https://github.com/cszn/SCUNet) (Apache-2.0, (c) Kai Zhang) |
 | exposure, tone and color correction | [jacobsparts/adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | MIT (c) 2017 Zhenqiang Ying |
 
 `adaptive-enhance` is a port of the `adaptiveImageEnhancement` module of
@@ -51,7 +52,9 @@ attribution and is included in its release tarball.
 network; `rmbg-rs` reimplements the BiRefNet architecture, whose Swin
 Transformer backbone is MIT-licensed (Microsoft Research); `nafnet-rs`
 reimplements [NAFNet](https://github.com/megvii-research/NAFNet) (MIT,
-(c) 2022 megvii-model).
+(c) 2022 megvii-model); `scunet-rs` reimplements SCUNet, whose vendored upstream
+network module and reference transcription are Apache-2.0 works of the same
+author.
 
 ## Model weights
 
@@ -68,6 +71,7 @@ for non-commercial use only — read the terms before you download them.
 | LocateAnything-3B | Auto-Crop | **non-commercial research and evaluation only**, NVIDIA — [model card](https://huggingface.co/nvidia/LocateAnything-3B) |
 | NAFNet-GoPro / NAFNet-REDS / NAFNet-SIDD, widths 32 and 64 | Enhance | MIT, (c) 2022 megvii-model ([NAFNet](https://github.com/megvii-research/NAFNet)), converted to `.safetensors` |
 | maxim-lol, -fivek, -sidd, -gopro, -reds, -realblur-j, -realblur-r, -rain13k, -raindrop, -sots-indoor, -sots-outdoor | Maxim | Apache-2.0, (c) 2022 Google LLC ([MAXIM](https://github.com/google-research/maxim)), converted to `.safetensors` |
+| scunet-color-*, scunet-gray-* (eight) | Enhance (denoise) | Apache-2.0, (c) Kai Zhang ([SCUNet](https://github.com/cszn/SCUNet), released on the [KAIR](https://github.com/cszn/KAIR) releases page), converted to `.safetensors` |
 
 ## Image APIs
 

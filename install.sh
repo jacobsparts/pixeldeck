@@ -26,6 +26,7 @@ RMBG_VERSION=v0.1.0
 LOCATE_VERSION=v0.1.0
 NAFNET_VERSION=v0.2.0
 MAXIM_VERSION=v0.2.0
+SCUNET_VERSION=v0.1.0
 ENHANCE_VERSION=v0.1.0
 
 CPU_ONLY=0
@@ -161,6 +162,8 @@ engine nafnet-linux-x86_64 \
     "$(github nafnet-rs "$NAFNET_VERSION" "nafnet-linux-x86_64$suffix")"
 engine maxim-linux-x86_64 \
     "$(github maxim-rs "$MAXIM_VERSION" "maxim-linux-x86_64$suffix")"
+engine scunet-linux-x86_64 \
+    "$(github scunet-rs "$SCUNET_VERSION" "scunet-linux-x86_64$suffix")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"
@@ -202,6 +205,19 @@ for weights in maxim-lol.safetensors maxim-fivek.safetensors maxim-sidd.safetens
                maxim-rain13k.safetensors maxim-raindrop.safetensors \
                maxim-sots-indoor.safetensors maxim-sots-outdoor.safetensors; do
     fetch "$(github maxim-rs "$MAXIM_VERSION" "$weights")" "$MODEL_DIR/$weights"
+done
+
+# SCUNet: denoising. All eight checkpoints the authors publish, and the engine
+# runs every one of them - the two `real` models are the blind ones, trained on
+# a shuffled degradation sequence rather than a fixed sigma, the sigma-numbered
+# ones expect the noise they are named for, and the gray ones take a
+# single-channel input (the engine refuses a colour/gray mismatch by name
+# instead of guessing). The file name is again the whole configuration.
+for weights in scunet-color-real-psnr.safetensors scunet-color-real-gan.safetensors \
+               scunet-color-15.safetensors scunet-color-25.safetensors \
+               scunet-color-50.safetensors scunet-gray-15.safetensors \
+               scunet-gray-25.safetensors scunet-gray-50.safetensors; do
+    fetch "$(github scunet-rs "$SCUNET_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
 
 # ------------------------------------------------------- gated / built models

@@ -22,6 +22,7 @@ REALESRGAN_BIN = os.path.join(BIN_DIR, 'realesrgan-linux-x86_64')
 REALESRGAN_MODELS_DIR = os.path.join(BIN_DIR, 'models')
 NAFNET_BIN = os.path.join(BIN_DIR, 'nafnet-linux-x86_64')
 MAXIM_BIN = os.path.join(BIN_DIR, 'maxim-linux-x86_64')
+SCUNET_BIN = os.path.join(BIN_DIR, 'scunet-linux-x86_64')
 
 SUPER_RESOLUTION_MODELS = {
     'RealESRGAN x2plus': ('RealESRGAN_x2plus.safetensors', 2),
@@ -58,6 +59,25 @@ MAXIM_MODELS = {
     'Maxim Derain (Raindrop)': 'maxim-raindrop.safetensors',
     'Maxim Dehaze (Indoor)': 'maxim-sots-indoor.safetensors',
     'Maxim Dehaze (Outdoor)': 'maxim-sots-outdoor.safetensors',
+}
+
+# SCUNet: denoising, and the checkpoint alone says which kind. The two `real`
+# models are the authors' blind ones - trained on a shuffled sequence of blur,
+# noise, resampling and compression rather than a fixed amount of noise - and
+# are what to reach for on a photograph from a camera. The sigma-numbered ones
+# expect the amount of Gaussian noise they are named for, and the gray ones take
+# a single-channel image; the engine refuses a colour/gray mismatch by name
+# rather than guessing, which is why the labels say which is which. All eight
+# checkpoints the authors publish are here.
+SCUNET_MODELS = {
+    'SCUNet Denoise (real photos)': 'scunet-color-real-psnr.safetensors',
+    'SCUNet Denoise (real photos, sharper)': 'scunet-color-real-gan.safetensors',
+    'SCUNet Denoise (sigma 15)': 'scunet-color-15.safetensors',
+    'SCUNet Denoise (sigma 25)': 'scunet-color-25.safetensors',
+    'SCUNet Denoise (sigma 50)': 'scunet-color-50.safetensors',
+    'SCUNet Denoise (gray, sigma 15)': 'scunet-gray-15.safetensors',
+    'SCUNet Denoise (gray, sigma 25)': 'scunet-gray-25.safetensors',
+    'SCUNet Denoise (gray, sigma 50)': 'scunet-gray-50.safetensors',
 }
 
 def _engine_message(label, code, stderr):
@@ -128,6 +148,41 @@ def run_maxim(image_bin, model):
     weights = os.path.join(REALESRGAN_MODELS_DIR, MAXIM_MODELS[model])
     with gpu_guard.gpu_lock:
         return _run_png_filter(MAXIM_BIN, 'maxim', image_bin, ['-m', weights])
+
+def run_scunet(image_bin, model):
+    if model not in SCUNET_MODELS:
+        raise RuntimeError(f'unhandled SCUNet model: {model}')
+    weights = os.path.join(REALESRGAN_MODELS_DIR, SCUNET_MODELS[model])
+    png_bytes = _ensure_png_bytes(image_bin)
+
+    with gpu_guard.gpu_lock:
+        tmpdir = tempfile.mkdtemp(prefix='pixeldeck-scunet-')
+        try:
+            in_path = os.path.join(tmpdir, 'input.png')
+            out_path = os.path.join(tmpdir, 'output.png')
+            with open(in_path, 'wb') as f:
+                f.write(png_bytes)
+
+            # Unlike NAFNet and MAXIM, this engine takes file paths rather than
+            # streaming a PNG on stdin, so it needs the temporary directory the
+            # Real-ESRGAN path also uses.
+            cmd = [SCUNET_BIN, '-m', weights, '-i', in_path, '-o', out_path]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if res.returncode != 0 or not os.path.exists(out_path):
+                err = res.stderr.decode('utf-8', 'replace')
+                raise EngineError(_engine_message('scunet', res.returncode, err))
+            with open(out_path, 'rb') as f:
+                return f.read()
+        finally:
+            for fname in os.listdir(tmpdir):
+                try:
+                    os.unlink(os.path.join(tmpdir, fname))
+                except OSError:
+                    pass
+            try:
+                os.rmdir(tmpdir)
+            except OSError:
+                pass
 
 def _sr_decode_png(image_bin):
     try:
@@ -313,6 +368,12 @@ async def go_local(request, post, deliver_bin_image):
         bin_image = await loop.run_in_executor(None, run_maxim, image_bin, post['model'])
         await deliver_bin_image(bin_image)
         return
+    if post['model'] in SCUNET_MODELS:
+        image_bin = post['image'].file.read()
+        loop = asyncio.get_event_loop()
+        bin_image = await loop.run_in_executor(None, run_scunet, image_bin, post['model'])
+        await deliver_bin_image(bin_image)
+        return
     if post['model'] in (
         'Exposure Fusion',
         'Exposure Fusion Knee 0.95',
@@ -393,6 +454,14 @@ def register_provider(register, get_config):
                 'NAFNet Denoise (fast)',
                 'NAFNet Denoise (best)',
                 'NAFNet Video Deblur (best)',
+                'SCUNet Denoise (real photos)',
+                'SCUNet Denoise (real photos, sharper)',
+                'SCUNet Denoise (sigma 15)',
+                'SCUNet Denoise (sigma 25)',
+                'SCUNet Denoise (sigma 50)',
+                'SCUNet Denoise (gray, sigma 15)',
+                'SCUNet Denoise (gray, sigma 25)',
+                'SCUNet Denoise (gray, sigma 50)',
             ],
             'default': 'NAFNet Deblur (fast)',
         },

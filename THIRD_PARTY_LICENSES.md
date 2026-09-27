@@ -71,7 +71,7 @@ for non-commercial use only — read the terms before you download them.
 | LocateAnything-3B | Auto-Crop | **non-commercial research and evaluation only**, NVIDIA — [model card](https://huggingface.co/nvidia/LocateAnything-3B) |
 | NAFNet-GoPro / NAFNet-REDS / NAFNet-SIDD, widths 32 and 64 | Enhance | MIT, (c) 2022 megvii-model ([NAFNet](https://github.com/megvii-research/NAFNet)), converted to `.safetensors` |
 | maxim-lol, -fivek, -sidd, -gopro, -reds, -realblur-j, -realblur-r, -rain13k, -raindrop, -sots-indoor, -sots-outdoor | Maxim | Apache-2.0, (c) 2022 Google LLC ([MAXIM](https://github.com/google-research/maxim)), converted to `.safetensors` |
-| scunet-color-*, scunet-gray-* (eight) | Enhance (denoise) | Apache-2.0, (c) Kai Zhang ([SCUNet](https://github.com/cszn/SCUNet), released on the [KAIR](https://github.com/cszn/KAIR) releases page), converted to `.safetensors` |
+| scunet-color-* (five) | Enhance (denoise) | Apache-2.0, (c) Kai Zhang ([SCUNet](https://github.com/cszn/SCUNet), released on the [KAIR](https://github.com/cszn/KAIR) releases page), converted to `.safetensors` |
 
 ## Image APIs
 

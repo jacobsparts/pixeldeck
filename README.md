@@ -60,7 +60,7 @@ to the mask, undo and redo, PNG and JPG export.
 - Linux on x86_64
 - Python 3.10 or newer, with `venv`
 - `curl`
-- About 4.0 GB of disk, or about 8.2 GB with Auto-Crop (whose model is built
+- About 3.8 GB of disk, or about 8.0 GB with Auto-Crop (whose model is built
   from a 7.7 GB download, so that step wants ~13 GB free)
 
 A GPU is optional. The seven inference engines are CUDA builds that probe the

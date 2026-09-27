@@ -207,16 +207,16 @@ for weights in maxim-lol.safetensors maxim-fivek.safetensors maxim-sidd.safetens
     fetch "$(github maxim-rs "$MAXIM_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
 
-# SCUNet: denoising. All eight checkpoints the authors publish, and the engine
-# runs every one of them - the two `real` models are the blind ones, trained on
-# a shuffled degradation sequence rather than a fixed sigma, the sigma-numbered
-# ones expect the noise they are named for, and the gray ones take a
-# single-channel input (the engine refuses a colour/gray mismatch by name
-# instead of guessing). The file name is again the whole configuration.
+# SCUNet: denoising. The two `real` models are the authors' blind ones, trained
+# on a shuffled degradation sequence rather than a fixed sigma, and the
+# sigma-numbered ones expect the noise they are named for; the file name is
+# again the whole configuration. These are the five colour checkpoints the SCUNet
+# authors publish; the engine also runs their three grayscale ones, but those
+# take a single-channel image (a colour picture paired with one is refused by
+# name), so they are not downloaded and not offered.
 for weights in scunet-color-real-psnr.safetensors scunet-color-real-gan.safetensors \
                scunet-color-15.safetensors scunet-color-25.safetensors \
-               scunet-color-50.safetensors scunet-gray-15.safetensors \
-               scunet-gray-25.safetensors scunet-gray-50.safetensors; do
+               scunet-color-50.safetensors; do
     fetch "$(github scunet-rs "$SCUNET_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
 

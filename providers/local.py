@@ -65,19 +65,17 @@ MAXIM_MODELS = {
 # models are the authors' blind ones - trained on a shuffled sequence of blur,
 # noise, resampling and compression rather than a fixed amount of noise - and
 # are what to reach for on a photograph from a camera. The sigma-numbered ones
-# expect the amount of Gaussian noise they are named for, and the gray ones take
-# a single-channel image; the engine refuses a colour/gray mismatch by name
-# rather than guessing, which is why the labels say which is which. All eight
-# checkpoints the authors publish are here.
+# expect the amount of Gaussian noise they are named for. These are the five
+# colour checkpoints the authors publish. The three grayscale ones are not
+# offered: they take a single-channel image, and pairing one with a colour
+# picture is an error the engine refuses by name, so an entry for them would be
+# a trap rather than a tool.
 SCUNET_MODELS = {
     'SCUNet Denoise (real photos)': 'scunet-color-real-psnr.safetensors',
     'SCUNet Denoise (real photos, sharper)': 'scunet-color-real-gan.safetensors',
     'SCUNet Denoise (sigma 15)': 'scunet-color-15.safetensors',
     'SCUNet Denoise (sigma 25)': 'scunet-color-25.safetensors',
     'SCUNet Denoise (sigma 50)': 'scunet-color-50.safetensors',
-    'SCUNet Denoise (gray, sigma 15)': 'scunet-gray-15.safetensors',
-    'SCUNet Denoise (gray, sigma 25)': 'scunet-gray-25.safetensors',
-    'SCUNet Denoise (gray, sigma 50)': 'scunet-gray-50.safetensors',
 }
 
 def _engine_message(label, code, stderr):
@@ -459,9 +457,6 @@ def register_provider(register, get_config):
                 'SCUNet Denoise (sigma 15)',
                 'SCUNet Denoise (sigma 25)',
                 'SCUNet Denoise (sigma 50)',
-                'SCUNet Denoise (gray, sigma 15)',
-                'SCUNet Denoise (gray, sigma 25)',
-                'SCUNet Denoise (gray, sigma 50)',
             ],
             'default': 'NAFNet Deblur (fast)',
         },

@@ -258,8 +258,14 @@ def run_swin2sr(image_bin, model):
     if model not in SWIN2SR_MODELS:
         raise RuntimeError(f'unhandled Swin2SR model: {model}')
     weights = os.path.join(REALESRGAN_MODELS_DIR, SWIN2SR_MODELS[model])
+    # `--tile auto` IS NOT OPTIONAL FOR ORDINARY PHOTOS. The whole-image pass the
+    # engine defaults to is the exact one, but a 1024-pixel-tall photo pads to
+    # 1032 and one token per padded pixel runs into `grid.y`'s 65535 blocks of 16
+    # rows - a LAUNCH limit of 1023 pixels a side, not a memory one - so the
+    # default refuses an image of perfectly ordinary size. `auto` runs one pass
+    # when it fits and sizes a tile when it does not, and says which it chose.
     with gpu_guard.gpu_lock:
-        return _run_png_filter(SWIN2SR_BIN, 'swin2sr', image_bin, ['-m', weights])
+        return _run_png_filter(SWIN2SR_BIN, 'swin2sr', image_bin, ['-m', weights, '--tile', 'auto'])
 
 def _sr_decode_png(image_bin):
     try:
@@ -290,20 +296,29 @@ def run_super_resolution(image_bin, model):
             with open(in_path, 'wb') as f:
                 f.write(png_bytes)
 
+            # `--tile 512` KEEPS A 4x PASS INSIDE THE CARD. The engine sizes its
+            # activation arena from what will actually run, and a whole-image 4x
+            # pass on a 725x1024 photo wants about 9 GiB of head planes - more
+            # than the 8 GiB card this runs on, and more than most. A 512-pixel
+            # tile with the engine's 10 pixels of context costs a fraction of the
+            # seamed area and turns a hard `cuMemAlloc` failure into a result;
+            # the tile seams are measured in the engine's README. The CPU path
+            # ignores the flag (only the GPU path tiles), so this is free there.
             cmd = [
                 REALESRGAN_BIN,
                 '--model', model_path,
+                '--tile', '512',
                 '-i', in_path,
                 '-o', out_path,
             ]
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if res.returncode != 0:
-                raise RuntimeError(
-                    f"realesrgan failed (exit {res.returncode}): "
-                    f"{res.stderr.decode('utf-8', 'replace')}"
-                )
+                # The engine's own lines are written for this reader, so they are
+                # shown as they stand rather than behind a Python exception name.
+                raise EngineError(_engine_message(
+                    'realesrgan', res.returncode, res.stderr.decode('utf-8', 'replace')))
             if not os.path.exists(out_path):
-                raise RuntimeError('realesrgan produced no output file')
+                raise EngineError('realesrgan produced no output file')
             with open(out_path, 'rb') as f:
                 return f.read()
         finally:

@@ -252,10 +252,9 @@ def run_nightenh(image_bin, model):
 def run_swin2sr(image_bin, model):
     # Swin2SR streams like NAFNet and MAXIM: `-m` is the whole configuration
     # (the file decides the task and the scale) and the PNG comes in on stdin and
-    # goes out on stdout. Unlike the other engines here it does NOT fall back to
-    # the CPU when the GPU cannot start - `--device gpu` is what a CUDA build
-    # defaults to and a failed cuInit is an error - so this is the one entry in
-    # bin/ that has to be the CPU-only build on a machine with no driver.
+    # goes out on stdout. Like every engine here it falls back to the CPU when
+    # there is no usable driver, and it says so on stderr; `--device gpu` typed
+    # by hand is what turns that into an error, and nothing here types it.
     if model not in SWIN2SR_MODELS:
         raise RuntimeError(f'unhandled Swin2SR model: {model}')
     weights = os.path.join(REALESRGAN_MODELS_DIR, SWIN2SR_MODELS[model])
@@ -568,6 +567,13 @@ def register_provider(register, get_config):
     # IFAN predicts a per-pixel filter tensor so it is the only one that handles
     # defocus specifically. The engine is named in every label because that is
     # what tells the implementations apart; the menu is named for the job.
+    #
+    # Rain and haze are in this menu rather than in one of their own: both are a
+    # degraded view rather than a separate restoration task - rain streaks and
+    # droplets are blur across a differently-shaped kernel, and haze is a
+    # veiling glare whose removal restores local contrast - so the question a
+    # user is answering ("what is wrong with this picture?") puts them here, and
+    # MAXIM is the engine that covers them.
     register('local', 'Deblur', {
         'model': {
             'options': [
@@ -579,6 +585,10 @@ def register_provider(register, get_config):
                 'Maxim Deblur (REDS)',
                 'Maxim Deblur (RealBlur-R)',
                 'Maxim Deblur (RealBlur-J)',
+                'Maxim Derain (Rain13k)',
+                'Maxim Derain (Raindrop)',
+                'Maxim Dehaze (Indoor)',
+                'Maxim Dehaze (Outdoor)',
             ],
             'default': 'NAFNet Deblur (fast)',
         },
@@ -609,26 +619,6 @@ def register_provider(register, get_config):
                 'Light Effects Suppression',
             ],
             'default': 'Maxim Low-light (LOL)',
-        },
-    })(handler)
-
-    register('local', 'Derain', {
-        'model': {
-            'options': [
-                'Maxim Derain (Rain13k)',
-                'Maxim Derain (Raindrop)',
-            ],
-            'default': 'Maxim Derain (Rain13k)',
-        },
-    })(handler)
-
-    register('local', 'Dehaze', {
-        'model': {
-            'options': [
-                'Maxim Dehaze (Indoor)',
-                'Maxim Dehaze (Outdoor)',
-            ],
-            'default': 'Maxim Dehaze (Outdoor)',
         },
     })(handler)
 

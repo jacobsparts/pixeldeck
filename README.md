@@ -49,11 +49,9 @@ engine do I want".
 | Background Removal | local RMBG-2.0; Pixian; AILabTools |
 | Auto-Crop | local LocateAnything-3B, prompted for single items, kits or light items |
 | Contrast | local exposure fusion, adaptive enhancement, white balance and gamma correction — tone and luminance, not only color |
-| Deblur | local NAFNet (uniform blur, and a checkpoint for video), local IFAN (defocus specifically, via a predicted per-pixel filter), local MAXIM (GoPro, REDS and the two RealBlur sets) |
-| Denoise | local SCUNet (the authors' blind `real` models for a camera JPEG, plus fixed-sigma checkpoints), local NAFNet, local MAXIM (SIDD) |
 | Low-Light | local MAXIM (LOL, and FiveK for a lit scene that just needs enhancing), local nightenh (low light, or light-effects suppression when the scene is bright but the light is ugly) |
-| Derain | local MAXIM (Rain13k, Raindrop) |
-| Dehaze | local MAXIM (indoor, outdoor) |
+| Deblur | local NAFNet (uniform blur, and a checkpoint for video), local IFAN (defocus specifically, via a predicted per-pixel filter), local MAXIM (GoPro, REDS and the two RealBlur sets for motion blur, Rain13k and Raindrop for rain, indoor and outdoor for haze) |
+| Denoise | local SCUNet (the authors' blind `real` models for a camera JPEG, plus fixed-sigma checkpoints), local NAFNet, local MAXIM (SIDD) |
 | AI Edit | Gemini image models, [OI] image models |
 
 Photo Box 2048 runs the whole product-photo sequence in one go: auto-crop, then
@@ -188,7 +186,7 @@ can run them by hand the same way.
 | BiRefNet / RMBG-2.0 | [rmbg-rs](https://github.com/jacobsparts/rmbg-rs) | `rmbg-linux-x86_64` | `models/RMBG-2.0.safetensors` | Background Removal |
 | LocateAnything-3B | [locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | `locate-anything` | `models/locate-anything-allq8_0.laqt` | Auto-Crop |
 | NAFNet | [nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | `nafnet-linux-x86_64` | `models/nafnet-*.safetensors` | Deblur, Denoise |
-| MAXIM | [maxim-rs](https://github.com/jacobsparts/maxim-rs) | `maxim-linux-x86_64` | `models/maxim-*.safetensors` | Deblur, Denoise, Low-Light, Derain, Dehaze |
+| MAXIM | [maxim-rs](https://github.com/jacobsparts/maxim-rs) | `maxim-linux-x86_64` | `models/maxim-*.safetensors` | Deblur, Denoise, Low-Light |
 | SCUNet | [scunet-rs](https://github.com/jacobsparts/scunet-rs) | `scunet-linux-x86_64` | `models/scunet-*.safetensors` | Denoise |
 | IFAN | [ifan-rs](https://github.com/jacobsparts/ifan-rs) | `ifan-linux-x86_64` | `models/IFAN.safetensors` | Deblur |
 | OpenCE exposure fusion, IAGCWD, white balance | [adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |

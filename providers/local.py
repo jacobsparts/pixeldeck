@@ -427,6 +427,8 @@ async def go_local(request, post, deliver_bin_image):
         image_bin = post['image'].file.read()
         loop = asyncio.get_event_loop()
         bin_image = await loop.run_in_executor(None, run_ifan, image_bin)
+        await deliver_bin_image(bin_image)
+        return
     if post['model'] in NIGHTENH_MODELS:
         image_bin = post['image'].file.read()
         loop = asyncio.get_event_loop()
@@ -505,51 +507,76 @@ def register_provider(register, get_config):
         },
     })(handler)
 
-    register('local', 'Enhance', {
+    # The menus below are the FUNCTIONS, not the engines. Three of these
+    # functions have more than one implementation here, and which one is right
+    # is a property of the picture rather than of the engine: NAFNet is trained
+    # on a fixed degradation and is the one to reach for when the blur or noise
+    # is uniform, SCUNet's `real` checkpoints are blind models for a photograph
+    # from a camera, MAXIM covers the weather and the harder motion blurs, and
+    # IFAN predicts a per-pixel filter tensor so it is the only one that handles
+    # defocus specifically. The engine is named in every label because that is
+    # what tells the implementations apart; the menu is named for the job.
+    register('local', 'Deblur', {
         'model': {
             'options': [
                 'NAFNet Deblur (fast)',
                 'NAFNet Deblur (best)',
-                'NAFNet Denoise (fast)',
-                'NAFNet Denoise (best)',
                 'NAFNet Video Deblur (best)',
-                'SCUNet Denoise (real photos)',
-                'SCUNet Denoise (real photos, sharper)',
-                'SCUNet Denoise (sigma 15)',
-                'SCUNet Denoise (sigma 25)',
-                'SCUNet Denoise (sigma 50)',
                 'IFAN Defocus Deblur',
+                'Maxim Deblur (GoPro)',
+                'Maxim Deblur (REDS)',
+                'Maxim Deblur (RealBlur-R)',
+                'Maxim Deblur (RealBlur-J)',
             ],
             'default': 'NAFNet Deblur (fast)',
         },
     })(handler)
 
-    register('local', 'Night Enhancement', {
+    register('local', 'Denoise', {
         'model': {
             'options': [
-                'Night Enhancement (low light)',
-                'Light Effects Suppression',
+                'NAFNet Denoise (fast)',
+                'NAFNet Denoise (best)',
+                'SCUNet Denoise (real photos)',
+                'SCUNet Denoise (real photos, sharper)',
+                'SCUNet Denoise (sigma 15)',
+                'SCUNet Denoise (sigma 25)',
+                'SCUNet Denoise (sigma 50)',
+                'Maxim Denoise (SIDD)',
             ],
-            'default': 'Night Enhancement (low light)',
+            'default': 'SCUNet Denoise (real photos)',
         },
     })(handler)
 
-    register('local', 'Maxim', {
+    register('local', 'Low-Light', {
         'model': {
             'options': [
                 'Maxim Low-light (LOL)',
                 'Maxim Enhance (FiveK)',
-                'Maxim Denoise (SIDD)',
-                'Maxim Deblur (GoPro)',
-                'Maxim Deblur (REDS)',
-                'Maxim Deblur (RealBlur-R)',
-                'Maxim Deblur (RealBlur-J)',
+                'Night Enhancement (low light)',
+                'Light Effects Suppression',
+            ],
+            'default': 'Maxim Low-light (LOL)',
+        },
+    })(handler)
+
+    register('local', 'Derain', {
+        'model': {
+            'options': [
                 'Maxim Derain (Rain13k)',
                 'Maxim Derain (Raindrop)',
+            ],
+            'default': 'Maxim Derain (Rain13k)',
+        },
+    })(handler)
+
+    register('local', 'Dehaze', {
+        'model': {
+            'options': [
                 'Maxim Dehaze (Indoor)',
                 'Maxim Dehaze (Outdoor)',
             ],
-            'default': 'Maxim Low-light (LOL)',
+            'default': 'Maxim Dehaze (Outdoor)',
         },
     })(handler)
 

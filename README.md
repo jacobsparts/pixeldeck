@@ -37,17 +37,24 @@ somewhere else. It has no authentication of its own.
 
 ## Tools
 
+The menus are the jobs, not the engines. Where more than one engine can do a
+job, all of them are in that one menu and the engine is named in the entry, so
+the choice is "which of these is right for this picture" rather than "which
+engine do I want".
+
 | menu | tools |
 | --- | --- |
 | Super Resolution | local RealESRGAN x2plus / x4plus, RealESRNet x4plus, 4x-RealisticRescaler; AILabTools upscalers; Replicate swin2sr, HAT, latent-sr and others |
 | Inpainting | local LaMa, with optional tile and section modes; AILabTools erasure |
-| Background Removal | local RMBG-2.0; Pixian; AILabTools; Replicate rembg, modnet, dis |
+| Background Removal | local RMBG-2.0; Pixian; AILabTools |
 | Auto-Crop | local LocateAnything-3B, prompted for single items, kits or light items |
 | Contrast | local exposure fusion, adaptive enhancement, white balance and gamma correction — tone and luminance, not only color |
-| Enhance | local NAFNet, deblurring and denoising; local SCUNet, denoising; local IFAN, defocus deblurring |
-| Night Enhancement | local nightenh, light-effects suppression and low-light enhancement |
+| Deblur | local NAFNet (uniform blur, and a checkpoint for video), local IFAN (defocus specifically, via a predicted per-pixel filter), local MAXIM (GoPro, REDS and the two RealBlur sets) |
+| Denoise | local SCUNet (the authors' blind `real` models for a camera JPEG, plus fixed-sigma checkpoints), local NAFNet, local MAXIM (SIDD) |
+| Low-Light | local MAXIM (LOL, and FiveK for a lit scene that just needs enhancing), local nightenh (low light, or light-effects suppression when the scene is bright but the light is ugly) |
+| Derain | local MAXIM (Rain13k, Raindrop) |
+| Dehaze | local MAXIM (indoor, outdoor) |
 | AI Edit | Gemini image models, [OI] image models |
-| Maxim | local MAXIM, eleven checkpoints: low-light, enhancement, denoise, deblur, derain and dehaze |
 
 Photo Box 2048 runs the whole product-photo sequence in one go: auto-crop, then
 background removal, then a crop to the subject and a resize to 2048.
@@ -180,13 +187,13 @@ can run them by hand the same way.
 | LaMa | [lama-inpaint-rs](https://github.com/jacobsparts/lama-inpaint-rs) | `lama-inpaint` | `models/big-lama.safetensors` | Inpainting |
 | BiRefNet / RMBG-2.0 | [rmbg-rs](https://github.com/jacobsparts/rmbg-rs) | `rmbg-linux-x86_64` | `models/RMBG-2.0.safetensors` | Background Removal |
 | LocateAnything-3B | [locate-anything-rs](https://github.com/jacobsparts/locate-anything-rs) | `locate-anything` | `models/locate-anything-allq8_0.laqt` | Auto-Crop |
-| NAFNet | [nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | `nafnet-linux-x86_64` | `models/nafnet-*.safetensors` | Enhance |
-| MAXIM | [maxim-rs](https://github.com/jacobsparts/maxim-rs) | `maxim-linux-x86_64` | `models/maxim-*.safetensors` | Maxim (low-light, enhancement, denoise, deblur, derain, dehaze) |
-| SCUNet | [scunet-rs](https://github.com/jacobsparts/scunet-rs) | `scunet-linux-x86_64` | `models/scunet-*.safetensors` | Enhance (denoise) |
-| IFAN | [ifan-rs](https://github.com/jacobsparts/ifan-rs) | `ifan-linux-x86_64` | `models/IFAN.safetensors` | Enhance (defocus deblur) |
+| NAFNet | [nafnet-rs](https://github.com/jacobsparts/nafnet-rs) | `nafnet-linux-x86_64` | `models/nafnet-*.safetensors` | Deblur, Denoise |
+| MAXIM | [maxim-rs](https://github.com/jacobsparts/maxim-rs) | `maxim-linux-x86_64` | `models/maxim-*.safetensors` | Deblur, Denoise, Low-Light, Derain, Dehaze |
+| SCUNet | [scunet-rs](https://github.com/jacobsparts/scunet-rs) | `scunet-linux-x86_64` | `models/scunet-*.safetensors` | Denoise |
+| IFAN | [ifan-rs](https://github.com/jacobsparts/ifan-rs) | `ifan-linux-x86_64` | `models/IFAN.safetensors` | Deblur |
 | OpenCE exposure fusion, IAGCWD, white balance | [adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |
 
-| nightenh | [nightenh-rs](https://github.com/jacobsparts/nightenh-rs) | `nightenh-linux-x86_64` | `models/nightenh-*.safetensors` | Night Enhancement (low-light, light-effects suppression) |
+| nightenh | [nightenh-rs](https://github.com/jacobsparts/nightenh-rs) | `nightenh-linux-x86_64` | `models/nightenh-*.safetensors` | Low-Light |
 
 The nine inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA

@@ -67,7 +67,11 @@ CATEGORIES = (
     'Background Removal',
     'Auto-Crop',
     'Contrast',
-    'Enhance',
+    'Deblur',
+    'Denoise',
+    'Low-Light',
+    'Derain',
+    'Dehaze',
     'AI Edit',
 )
 schema = {category: {} for category in CATEGORIES}

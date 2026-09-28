@@ -98,11 +98,6 @@ async def replicate_download(url, api_token):
 async def go_replicate(request, post, deliver_bin_image, api_token):
     def replicate_req(model, url, mask_url=None):
         return {
-            'rembg': { "version": "fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003", "input": { "image": url } },
-            'modnet': { "version": "da7d45f3b836795f945f221fc0b01a6d3ab7f5e163f13208948ad436001e2255", "input": { "image": url } },
-            'rembg-enhance': { "version": "4067ee2a58f6c161d434a9c077cfa012820b8e076efa2772aa171e26557da919", "input": { "image": url } },
-            'remove-bg': { "version": "95fcc2a26d3899cd6c2691c900465aaeff466285a65c14638cc5f36f34befaf1", "input": { "image": url } },
-            'dis-v1': { "version": "4bdb324f7d2547aef96ca0704a94c0b25ab2805b9afecc2d24e68f7a01f87297", "input": { "image": url } },
             'controlnet': { "version": "3a3d5371ef3b64c0516314f8846ecc3e56a7356230f898de50a5eb578a74e645", "input": { "image": url, "steps": 50, "denoise": 0.4 } },
             'swin2sr classical': { "version": "a01b0512004918e67d4022780360a3d54f8de8cb375737f12ac1b0de3f3cf15b", "input": { "image": url, "task": "classical_sr" } },
             'swin2sr real-world': { "version": "a01b0512004918e67d4022780360a3d54f8de8cb375737f12ac1b0de3f3cf15b", "input": { "image": url, "task": "real_sr" } },
@@ -129,19 +124,6 @@ def register_provider(register, get_config):
         return False
 
     handler = lambda req, post, deliver: go_replicate(req, post, deliver, api_token)
-
-    register('Replicate', 'Background Removal', {
-        'model': {
-            'options': [
-                'rembg',
-                'dis-v1',
-                'modnet',
-                'rembg-enhance',
-                'remove-bg',
-            ],
-            'default': 'rembg',
-        },
-    })(handler)
 
     register('Replicate', 'Super Resolution', {
         'model': {

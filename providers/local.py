@@ -201,14 +201,12 @@ def run_scunet(image_bin, model):
             except OSError:
                 pass
 
-# IFAN is the one engine here whose CPU-only build will not run from a bare
-# command line: every other engine picks its device at parse time
-# (`if cfg!(feature = "cuda") { "gpu" } else { "cpu" }`), so a --no-default-features
-# build falls back to its CPU path by itself, while IFAN answers the default with
-# "this build has no CUDA backend ...; pass --cpu". `install.sh --cpu-only` puts
-# exactly that binary in bin/, so the flag is needed there and is harmless
-# everywhere else. Detect it from the ONE message that means it, once, and
-# remember the answer rather than re-running the pass to find out again.
+# IFAN is the one engine here that will not run from a bare command line on a
+# machine with no CUDA driver: every other engine picks its device at parse time
+# and falls back to its CPU path by itself, while IFAN answers the default with
+# "this build has no CUDA backend ...; pass --cpu". Detect it from the ONE
+# message that means it, once, and remember the answer rather than re-running the
+# pass to find out again.
 _IFAN_WANTS_CPU = [False]
 
 def run_ifan(image_bin):

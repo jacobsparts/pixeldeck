@@ -69,9 +69,8 @@ to the mask, undo and redo, PNG and JPG export.
 - About 3.8 GB of disk, or about 8.0 GB with Auto-Crop (whose model is built
   from a 7.7 GB download, so that step wants ~13 GB free)
 
-A GPU is optional. The nine inference engines are CUDA builds that probe the
-driver at start-up and fall back to the CPU backend, so they work either way;
-run `./install.sh --cpu-only` to fetch the smaller CPU-only builds instead. The
+A GPU is optional. The nine inference engines probe the CUDA driver at
+start-up and fall back to their CPU backend, so they work either way. The
 contrast tools are plain Rust and need no GPU at all.
 
 The inference engines process a whole image at once, so their memory grows with
@@ -111,7 +110,6 @@ engines that publish them, or built by the scripts those engines ship.
 
 | option | effect |
 | --- | --- |
-| `--cpu-only` | download the CPU-only engine builds |
 | `--no-rmbg` | skip the gated RMBG-2.0 checkpoint |
 | `--no-locate` | skip the LocateAnything container (the big one) |
 | `--service` | install and enable the systemd user unit |

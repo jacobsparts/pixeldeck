@@ -32,7 +32,6 @@ NIGHTENH_VERSION=v0.1.0
 ENHANCE_VERSION=v0.1.0
 SWIN2SR_VERSION=v0.2.0
 
-CPU_ONLY=0
 WITH_RMBG=1
 WITH_LOCATE=1
 WITH_SERVICE=0
@@ -48,8 +47,6 @@ Install Pixeldeck into this directory.
 
   ./install.sh [options]
 
-  --cpu-only     download the CPU-only engine builds instead of the CUDA ones
-                 (smaller, and slower on a machine with a GPU)
   --no-rmbg      skip the gated RMBG-2.0 checkpoint (background removal)
   --no-locate    skip the LocateAnything-3B container (Auto-Crop); it is a
                  7.7 GB download that is then quantized, so it needs ~12 GB free
@@ -64,7 +61,6 @@ EOF
 
 while (( $# )); do
     case $1 in
-        --cpu-only)  CPU_ONLY=1 ;;
         --no-rmbg)   WITH_RMBG=0 ;;
         --no-locate) WITH_LOCATE=0 ;;
         --service)   WITH_SERVICE=1 ;;
@@ -145,34 +141,30 @@ say "installing Python packages"
 # ------------------------------------------------------------------ engines
 
 say "downloading the image engines"
-if (( CPU_ONLY )); then
-    suffix=-cpu-only
-else
-    suffix=
-fi
 
-# The CUDA builds probe the driver at start-up and fall back to the CPU
-# backend, so they are what we install unless --cpu-only was asked for.
+# Every engine ships one build that probes the CUDA driver at start-up and
+# falls back to its CPU backend, so the one binary covers a machine with no
+# NVIDIA driver at all.
 engine realesrgan-linux-x86_64 \
-    "$(github realesrgan-rs "$REALESRGAN_VERSION" "realesrgan-linux-x86_64$suffix")"
+    "$(github realesrgan-rs "$REALESRGAN_VERSION" "realesrgan-linux-x86_64")"
 engine lama-inpaint \
-    "$(github lama-inpaint-rs "$LAMA_VERSION" "lama-inpaint-linux-x86_64$suffix")"
+    "$(github lama-inpaint-rs "$LAMA_VERSION" "lama-inpaint-linux-x86_64")"
 engine rmbg-linux-x86_64 \
-    "$(github rmbg-rs "$RMBG_VERSION" "rmbg-linux-x86_64$suffix")"
+    "$(github rmbg-rs "$RMBG_VERSION" "rmbg-linux-x86_64")"
 engine locate-anything \
-    "$(github locate-anything-rs "$LOCATE_VERSION" "locate-anything-linux-x86_64$suffix")"
+    "$(github locate-anything-rs "$LOCATE_VERSION" "locate-anything-linux-x86_64")"
 engine nafnet-linux-x86_64 \
-    "$(github nafnet-rs "$NAFNET_VERSION" "nafnet-linux-x86_64$suffix")"
+    "$(github nafnet-rs "$NAFNET_VERSION" "nafnet-linux-x86_64")"
 engine maxim-linux-x86_64 \
-    "$(github maxim-rs "$MAXIM_VERSION" "maxim-linux-x86_64$suffix")"
+    "$(github maxim-rs "$MAXIM_VERSION" "maxim-linux-x86_64")"
 engine scunet-linux-x86_64 \
-    "$(github scunet-rs "$SCUNET_VERSION" "scunet-linux-x86_64$suffix")"
+    "$(github scunet-rs "$SCUNET_VERSION" "scunet-linux-x86_64")"
 engine ifan-linux-x86_64 \
-    "$(github ifan-rs "$IFAN_VERSION" "ifan-linux-x86_64$suffix")"
+    "$(github ifan-rs "$IFAN_VERSION" "ifan-linux-x86_64")"
 engine nightenh-linux-x86_64 \
-    "$(github nightenh-rs "$NIGHTENH_VERSION" "nightenh-linux-x86_64$suffix")"
+    "$(github nightenh-rs "$NIGHTENH_VERSION" "nightenh-linux-x86_64")"
 engine swin2sr-linux-x86_64 \
-    "$(github swin2sr-rs "$SWIN2SR_VERSION" "swin2sr-linux-x86_64$suffix")"
+    "$(github swin2sr-rs "$SWIN2SR_VERSION" "swin2sr-linux-x86_64")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"

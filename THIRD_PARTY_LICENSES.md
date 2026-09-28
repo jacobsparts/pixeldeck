@@ -23,7 +23,7 @@ These are checked into `static/` and served as-is.
 `install.sh` downloads prebuilt binaries from the release pages of these
 repositories. They are not distributed with Pixeldeck.
 
-The nine inference engines are built on
+The ten inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
 toolkit for inference engines: hand-written CUDA kernels with matching pure-Rust
 implementations, and a driver layer that is `dlopen`ed at run time. The contrast
@@ -42,6 +42,7 @@ toolkit, no cuDNN, no PyTorch, no Python.
 | SCUNet denoising | [jacobsparts/scunet-rs](https://github.com/jacobsparts/scunet-rs) | MIT (c) 2026 Jacob Stoner; an independent implementation of [cszn/SCUNet](https://github.com/cszn/SCUNet) (Apache-2.0, (c) Kai Zhang) |
 | IFAN defocus deblurring | [jacobsparts/ifan-rs](https://github.com/jacobsparts/ifan-rs) | MIT (c) 2026 Jacob Stoner for the engine; **AGPL-3.0** for `tools/` and the checkpoint, which are derived from the authors' release — see the note below |
 | nightenh night enhancement and light-effects suppression | [jacobsparts/nightenh-rs](https://github.com/jacobsparts/nightenh-rs) | MIT (c) 2026 Jacob Stoner; an independent reimplementation of [jinyeying/night-enhancement](https://github.com/jinyeying/night-enhancement) |
+| Swin2SR super resolution | [jacobsparts/swin2sr-rs](https://github.com/jacobsparts/swin2sr-rs) | MIT (c) 2026 Jacob Stoner; an independent reimplementation of [mv-lab/swin2sr](https://github.com/mv-lab/swin2sr) (Apache-2.0), whose network module `tools/network_swin2sr.py` is copied verbatim as the accuracy reference |
 | exposure, tone and color correction | [jacobsparts/adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | MIT (c) 2017 Zhenqiang Ying |
 
 `adaptive-enhance` is a port of the `adaptiveImageEnhancement` module of
@@ -66,7 +67,11 @@ Transformer backbone is MIT-licensed (Microsoft Research); `nafnet-rs`
 reimplements [NAFNet](https://github.com/megvii-research/NAFNet) (MIT,
 (c) 2022 megvii-model); `scunet-rs` reimplements SCUNet, whose vendored upstream
 network module and reference transcription are Apache-2.0 works of the same
-author; `nightenh-rs` reimplements the generator from
+author; `swin2sr-rs` reimplements [Swin2SR](https://github.com/mv-lab/swin2sr)
+(Apache-2.0), itself built on the MIT-licensed
+[Swin Transformer](https://github.com/microsoft/Swin-Transformer), and its
+`tools/` carries the upstream network verbatim as the accuracy reference;
+`nightenh-rs` reimplements the generator from
 [night-enhancement](https://github.com/jinyeying/night-enhancement), whose code
 and weights are MIT for academic and other non-commercial uses.
 
@@ -87,6 +92,7 @@ for non-commercial use only — read the terms before you download them.
 | maxim-lol, -fivek, -sidd, -gopro, -reds, -realblur-j, -realblur-r, -rain13k, -raindrop, -sots-indoor, -sots-outdoor | Maxim | Apache-2.0, (c) 2022 Google LLC ([MAXIM](https://github.com/google-research/maxim)), converted to `.safetensors` |
 | scunet-color-* (five) | Enhance (denoise) | Apache-2.0, (c) Kai Zhang ([SCUNet](https://github.com/cszn/SCUNet), released on the [KAIR](https://github.com/cszn/KAIR) releases page), converted to `.safetensors` |
 | IFAN | Enhance (defocus deblur) | **AGPL-3.0**, (c) Junyong Lee, Hyeongseok Son, Jaesung Rim, Sunghyun Cho and Seungyong Lee, POSTECH ([IFAN](https://github.com/codeslake/IFAN), CVPR 2021), converted to `.safetensors` — the one checkpoint here under a copyleft licence |
+| swin2sr-classical-x2, -classical-x4, -realworld-x4, -lightweight-x2, -compressed-x4 | Super Resolution | Apache-2.0, (c) the Swin2SR authors ([mv-lab/swin2sr](https://github.com/mv-lab/swin2sr)), converted to `.safetensors` |
 | nightenh-lol, nightenh-delighteffects | Night Enhancement | **non-commercial only** — MIT for academic and other non-commercial uses, (c) Yeying Jin, Wenhan Yang and Robby T. Tan ([night-enhancement](https://github.com/jinyeying/night-enhancement), ECCV 2022); `MODEL_LICENSE-NIGHTENH.txt` in the nightenh-rs repository carries the upstream text |
 
 ## Image APIs

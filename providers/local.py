@@ -27,6 +27,7 @@ IFAN_BIN = os.path.join(BIN_DIR, 'ifan-linux-x86_64')
 IFAN_WEIGHTS = os.path.join(BIN_DIR, 'models', 'IFAN.safetensors')
 NIGHTENH_BIN = os.path.join(BIN_DIR, 'nightenh-linux-x86_64')
 SWIN2SR_BIN = os.path.join(BIN_DIR, 'swin2sr-linux-x86_64')
+HAT_BIN = os.path.join(BIN_DIR, 'hat-linux-x86_64')
 
 SUPER_RESOLUTION_MODELS = {
     'RealESRGAN x2plus': ('RealESRGAN_x2plus.safetensors', 2),
@@ -48,6 +49,16 @@ SWIN2SR_MODELS = {
     'Swin2SR Real-World x4': 'swin2sr-realworld-x4.safetensors',
     'Swin2SR Lightweight x2': 'swin2sr-lightweight-x2.safetensors',
     'Swin2SR Compressed x4': 'swin2sr-compressed-x4.safetensors',
+}
+
+# HAT: the third engine in the Super Resolution menu. The checkpoint alone picks
+# both the model size and the scale, so the menu labels name both and this table
+# says which file each label means. HAT-S trades a little quality for a lot of
+# speed and is the one to reach for; HAT-L is the slowest and the best.
+HAT_MODELS = {
+    'HAT x4 (fast)': 'hat-s-x4.safetensors',
+    'HAT x4': 'hat-x4.safetensors',
+    'HAT x4 (best)': 'hat-l-x4.safetensors',
 }
 
 # NAFNet: the checkpoint alone picks both the task and the width (32 = the
@@ -264,6 +275,43 @@ def run_swin2sr(image_bin, model):
     # when it fits and sizes a tile when it does not, and says which it chose.
     with gpu_guard.gpu_lock:
         return _run_png_filter(SWIN2SR_BIN, 'swin2sr', image_bin, ['-m', weights, '--tile', 'auto'])
+
+def run_hat(image_bin, model):
+    # HAT takes file paths rather than streaming a PNG on stdin, so it needs the
+    # temporary directory the SCUNet path also uses. `-m` is the whole
+    # configuration (the checkpoint decides the model size and the scale). The
+    # GPU is the default and the CPU the fallback, so no --device flag is passed.
+    # `--mem` is a working-set budget, not a tile size: the engine runs one
+    # whole-image pass when it fits inside the budget and picks the largest tile
+    # that does when it does not, so a big product photo cannot OOM the card.
+    if model not in HAT_MODELS:
+        raise RuntimeError(f'unhandled HAT model: {model}')
+    weights = os.path.join(REALESRGAN_MODELS_DIR, HAT_MODELS[model])
+    png_bytes = _ensure_png_bytes(image_bin)
+    with gpu_guard.gpu_lock:
+        tmpdir = tempfile.mkdtemp(prefix='pixeldeck-hat-')
+        try:
+            in_path = os.path.join(tmpdir, 'input.png')
+            out_path = os.path.join(tmpdir, 'output.png')
+            with open(in_path, 'wb') as f:
+                f.write(png_bytes)
+            cmd = [HAT_BIN, '-m', weights, '-i', in_path, '-o', out_path, '--mem', '2000']
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if res.returncode != 0 or not os.path.exists(out_path):
+                err = res.stderr.decode('utf-8', 'replace')
+                raise EngineError(_engine_message('hat', res.returncode, err))
+            with open(out_path, 'rb') as f:
+                return f.read()
+        finally:
+            for fname in os.listdir(tmpdir):
+                try:
+                    os.unlink(os.path.join(tmpdir, fname))
+                except OSError:
+                    pass
+            try:
+                os.rmdir(tmpdir)
+            except OSError:
+                pass
 
 def _sr_decode_png(image_bin):
     try:
@@ -482,6 +530,12 @@ async def go_local(request, post, deliver_bin_image):
         bin_image = await loop.run_in_executor(None, run_swin2sr, image_bin, post['model'])
         await deliver_bin_image(bin_image)
         return
+    if post['model'] in HAT_MODELS:
+        image_bin = post['image'].file.read()
+        loop = asyncio.get_event_loop()
+        bin_image = await loop.run_in_executor(None, run_hat, image_bin, post['model'])
+        await deliver_bin_image(bin_image)
+        return
     if post['model'] in (
         'Exposure Fusion',
         'Exposure Fusion Knee 0.95',
@@ -520,11 +574,11 @@ async def go_local(request, post, deliver_bin_image):
 def register_provider(register, get_config):
     handler = lambda req, post, deliver: go_local(req, post, deliver)
 
-    # Two engines share this menu. The engine is named in every label because
+    # Three engines share this menu. The engine is named in every label because
     # that is what tells the implementations apart, and the checkpoint names are
     # the authors' own: Real-ESRGAN trained on a clean downsample, Swin2SR's
-    # real-world checkpoint on real sensor damage and JPEG artefacts, and its
-    # compressed one on an image whose detail a codec has already thrown away.
+    # real-world checkpoint on real sensor damage and JPEG artefacts, and HAT's
+    # three sizes trading speed against quality.
     register('local', 'Super Resolution', {
         'model': {
             'options': [
@@ -537,6 +591,9 @@ def register_provider(register, get_config):
                 'Swin2SR Real-World x4',
                 'Swin2SR Lightweight x2',
                 'Swin2SR Compressed x4',
+                'HAT x4 (fast)',
+                'HAT x4',
+                'HAT x4 (best)',
             ],
             'description': {
                 'Swin2SR Classical x4': 'for an image that was simply resized down 4x',
@@ -544,6 +601,9 @@ def register_provider(register, get_config):
                 'Swin2SR Real-World x4': 'for a photograph: trained on real camera damage and JPEG artefacts',
                 'Swin2SR Lightweight x2': 'a sixth of the size and about ten times faster, visibly softer',
                 'Swin2SR Compressed x4': 'for an image that has been through a codec, where the detail has been thrown away',
+                'HAT x4 (fast)': 'the small model: fast, and the one to reach for',
+                'HAT x4': 'the base model',
+                'HAT x4 (best)': 'the large model: slowest, and the best',
             },
             'default': 'RealESRGAN x2plus'
         }

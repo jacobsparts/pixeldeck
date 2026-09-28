@@ -100,7 +100,6 @@ async def go_replicate(request, post, deliver_bin_image, api_token):
         return {
             'latent-sr': { "version": "80a827435f187a2d4808381dd003ca2871144a1e944d18fa1c4d9bc899ea2fa8", "input": { "image": url } },
             'hcflow-sr': { "version": "5b4c102a77a9cf58a5beab5ebf36118d0526920fb630132b851b4f4c8038b304", "input": { "image": url } },
-            'xpixelgroup/hat': { "version": "0a976378413b6326bf3b63198cf982e5645511b858f96e578c2eef0f329910d9", "input": { "image": url } },
         }[model]
 
     image_bin = post['image'].file.read()
@@ -125,7 +124,6 @@ def register_provider(register, get_config):
             'options': [
                 'latent-sr',
                 'hcflow-sr',
-                'xpixelgroup/hat',
             ],
             'description': {
                 'latent-sr': 'latent diffusion superresolution, good with texture, use 512x512 input',
@@ -136,8 +134,8 @@ def register_provider(register, get_config):
 
     # Defocus deblurring used to be offered here, through the Replicate model
     # `ifan-defocus-deblur`, and super resolution used to include the Replicate
-    # `swin2sr` model. Neither is any more: both run locally - IFAN as
-    # `Enhance > IFAN Defocus Deblur`, Swin2SR as the five Swin2SR entries in
+    # `swin2sr` and `xpixelgroup/hat` models. None is any more: all run locally -
+    # IFAN as `Enhance > IFAN Defocus Deblur`, Swin2SR and HAT as entries in
     # `Super Resolution` in the `local` provider - with no API key, no upload and
     # no per-image cost.
     #

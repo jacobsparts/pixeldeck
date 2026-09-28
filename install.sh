@@ -31,6 +31,7 @@ IFAN_VERSION=v0.1.0
 NIGHTENH_VERSION=v0.1.0
 ENHANCE_VERSION=v0.1.0
 SWIN2SR_VERSION=v0.2.0
+HAT_VERSION=v0.1.0
 
 WITH_RMBG=1
 WITH_LOCATE=1
@@ -165,6 +166,8 @@ engine nightenh-linux-x86_64 \
     "$(github nightenh-rs "$NIGHTENH_VERSION" "nightenh-linux-x86_64")"
 engine swin2sr-linux-x86_64 \
     "$(github swin2sr-rs "$SWIN2SR_VERSION" "swin2sr-linux-x86_64")"
+engine hat-linux-x86_64 \
+    "$(github hat-rs "$HAT_VERSION" "hat-linux-x86_64")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"
@@ -246,6 +249,15 @@ for weights in swin2sr-classical-x4.safetensors swin2sr-classical-x2.safetensors
                swin2sr-realworld-x4.safetensors swin2sr-lightweight-x2.safetensors \
                swin2sr-compressed-x4.safetensors; do
     fetch "$(github swin2sr-rs "$SWIN2SR_VERSION" "$weights")" "$MODEL_DIR/$weights"
+done
+
+# HAT: super resolution, the third engine in that menu. The checkpoint alone
+# picks the model size and the scale, so `-m` is the whole configuration. HAT-S
+# is the small fast one and the one to reach for; HAT-L is the slowest and the
+# best. The 3x checkpoint exists upstream but no released build of it does, so
+# the three x4 files are what fills the HAT menu.
+for weights in hat-s-x4.safetensors hat-x4.safetensors hat-l-x4.safetensors; do
+    fetch "$(github hat-rs "$HAT_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
 
 # ------------------------------------------------------- gated / built models

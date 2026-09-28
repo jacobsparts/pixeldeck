@@ -98,10 +98,8 @@ async def replicate_download(url, api_token):
 async def go_replicate(request, post, deliver_bin_image, api_token):
     def replicate_req(model, url, mask_url=None):
         return {
-            'controlnet': { "version": "3a3d5371ef3b64c0516314f8846ecc3e56a7356230f898de50a5eb578a74e645", "input": { "image": url, "steps": 50, "denoise": 0.4 } },
             'latent-sr': { "version": "80a827435f187a2d4808381dd003ca2871144a1e944d18fa1c4d9bc899ea2fa8", "input": { "image": url } },
             'hcflow-sr': { "version": "5b4c102a77a9cf58a5beab5ebf36118d0526920fb630132b851b4f4c8038b304", "input": { "image": url } },
-            'stable-diffusion-upscaler': { "version": "f178f4e343c57e21a880da3e1e08b30bf1f91746073da213453d5ada7f7b4ac4", "input": { "image": url } },
             'xpixelgroup/hat': { "version": "0a976378413b6326bf3b63198cf982e5645511b858f96e578c2eef0f329910d9", "input": { "image": url } },
         }[model]
 
@@ -125,14 +123,11 @@ def register_provider(register, get_config):
     register('Replicate', 'Super Resolution', {
         'model': {
             'options': [
-                'controlnet',
                 'latent-sr',
                 'hcflow-sr',
-                'stable-diffusion-upscaler',
                 'xpixelgroup/hat',
             ],
             'description': {
-                'controlnet': 'batouresearch / high-resolution-controlnet-tile',
                 'latent-sr': 'latent diffusion superresolution, good with texture, use 512x512 input',
             },
             'default': 'hcflow-sr',
@@ -145,4 +140,7 @@ def register_provider(register, get_config):
     # `Enhance > IFAN Defocus Deblur`, Swin2SR as the five Swin2SR entries in
     # `Super Resolution` in the `local` provider - with no API key, no upload and
     # no per-image cost.
+    #
+    # `controlnet` (batouresearch's high-resolution-controlnet-tile) and
+    # `stable-diffusion-upscaler` were removed from Super Resolution as well.
     return True

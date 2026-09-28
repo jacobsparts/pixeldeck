@@ -111,7 +111,6 @@ async def go_replicate(request, post, deliver_bin_image, api_token):
             'hcflow-sr': { "version": "5b4c102a77a9cf58a5beab5ebf36118d0526920fb630132b851b4f4c8038b304", "input": { "image": url } },
             'stable-diffusion-upscaler': { "version": "f178f4e343c57e21a880da3e1e08b30bf1f91746073da213453d5ada7f7b4ac4", "input": { "image": url } },
             'xpixelgroup/hat': { "version": "0a976378413b6326bf3b63198cf982e5645511b858f96e578c2eef0f329910d9", "input": { "image": url } },
-            'scunet (denoise)': { "version": "3a005085d7b53f65b4c3ee70c17a565a046c8230ea0e599b52a512702bba689d", "input": { "image": url } },
         }[model]
 
     image_bin = post['image'].file.read()
@@ -168,13 +167,4 @@ def register_provider(register, get_config):
     # `ifan-defocus-deblur`. It is not any more: it runs locally, on the IFAN
     # engine in bin/ifan-linux-x86_64, as `Enhance > IFAN Defocus Deblur` in the
     # `local` provider - no API key, no upload, and no per-image cost.
-    register('Replicate', 'Enhance', {
-        'model': {
-            'options': [
-                'scunet (denoise)',
-            ],
-            'default': 'scunet (denoise)',
-        },
-    })(handler)
-
     return True

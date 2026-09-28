@@ -23,7 +23,7 @@ These are checked into `static/` and served as-is.
 `install.sh` downloads prebuilt binaries from the release pages of these
 repositories. They are not distributed with Pixeldeck.
 
-The seven inference engines are built on
+The nine inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
 toolkit for inference engines: hand-written CUDA kernels with matching pure-Rust
 implementations, and a driver layer that is `dlopen`ed at run time. The contrast
@@ -66,10 +66,9 @@ Transformer backbone is MIT-licensed (Microsoft Research); `nafnet-rs`
 reimplements [NAFNet](https://github.com/megvii-research/NAFNet) (MIT,
 (c) 2022 megvii-model); `scunet-rs` reimplements SCUNet, whose vendored upstream
 network module and reference transcription are Apache-2.0 works of the same
-author.
-(c) 2022 megvii-model); `nightenh-rs` reimplements the generator from
-[night-enhancement](https://github.com/jinyeying/night-enhancement), whose
-code and weights are MIT for academic and other non-commercial uses.
+author; `nightenh-rs` reimplements the generator from
+[night-enhancement](https://github.com/jinyeying/night-enhancement), whose code
+and weights are MIT for academic and other non-commercial uses.
 
 ## Model weights
 

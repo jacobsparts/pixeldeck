@@ -24,7 +24,7 @@ evens out the light and drops them all onto white:
 It runs on your own machine. The heavy work is done by small standalone Rust
 binaries that Pixeldeck downloads on install and runs as subprocesses, so there
 is no Python image-processing stack to fight with and no build step for the
-front end. The inference engines are built on
+front end. The nine inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
 toolkit: hand-written CUDA kernels with matching pure-Rust implementations, and
 a driver layer `dlopen`ed at run time. They need nothing at run time but libc
@@ -44,8 +44,7 @@ somewhere else. It has no authentication of its own.
 | Background Removal | local RMBG-2.0; Pixian; AILabTools; Replicate rembg, modnet, dis |
 | Auto-Crop | local LocateAnything-3B, prompted for single items, kits or light items |
 | Contrast | local exposure fusion, adaptive enhancement, white balance and gamma correction — tone and luminance, not only color |
-| Enhance | local NAFNet, deblurring and denoising; local SCUNet, denoising; local IFAN, defocus deblurring; Replicate night enhancement |
-| Enhance | local NAFNet, deblurring and denoising; Replicate scunet |
+| Enhance | local NAFNet, deblurring and denoising; local SCUNet, denoising; local IFAN, defocus deblurring |
 | Night Enhancement | local nightenh, light-effects suppression and low-light enhancement |
 | AI Edit | Gemini image models, [OI] image models |
 | Maxim | local MAXIM, eleven checkpoints: low-light, enhancement, denoise, deblur, derain and dehaze |
@@ -65,8 +64,7 @@ to the mask, undo and redo, PNG and JPG export.
 - About 3.8 GB of disk, or about 8.0 GB with Auto-Crop (whose model is built
   from a 7.7 GB download, so that step wants ~13 GB free)
 
-A GPU is optional. The eight inference engines are CUDA builds that probe the
-A GPU is optional. The seven inference engines are CUDA builds that probe the
+A GPU is optional. The nine inference engines are CUDA builds that probe the
 driver at start-up and fall back to the CPU backend, so they work either way;
 run `./install.sh --cpu-only` to fetch the smaller CPU-only builds instead. The
 contrast tools are plain Rust and need no GPU at all.
@@ -188,11 +186,9 @@ can run them by hand the same way.
 | IFAN | [ifan-rs](https://github.com/jacobsparts/ifan-rs) | `ifan-linux-x86_64` | `models/IFAN.safetensors` | Enhance (defocus deblur) |
 | OpenCE exposure fusion, IAGCWD, white balance | [adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |
 
-The eight inference engines are built on
 | nightenh | [nightenh-rs](https://github.com/jacobsparts/nightenh-rs) | `nightenh-linux-x86_64` | `models/nightenh-*.safetensors` | Night Enhancement (low-light, light-effects suppression) |
-| OpenCE exposure fusion, IAGCWD, white balance | [adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | `adaptive-enhance`, `iagcwd`, `white-balance` | none | Contrast |
 
-The seven inference engines are built on
+The nine inference engines are built on
 [lightgpu](https://github.com/jacobsparts/lightgpu), our dependency-light CUDA
 toolkit for inference engines: the CUDA driver API is `dlopen`ed at run time,
 and every CUDA kernel has a matching pure-Rust implementation, so
@@ -206,8 +202,7 @@ $ ldd bin/realesrgan-linux-x86_64
         linux-vdso.so.1  libgcc_s.so.1  libm.so.6  libc.so.6
 ```
 
-The eight inference engines are GPU tools when a GPU is present, so only one may
-The seven inference engines are GPU tools when a GPU is present, so only one may
+The nine inference engines are GPU tools when a GPU is present, so only one may
 run at a time: they are serialized by a single process-wide lock in
 `gpu_guard.py`, which is enough because the server is the only thing that ever
 starts them.

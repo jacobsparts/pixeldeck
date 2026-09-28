@@ -26,12 +26,28 @@ SCUNET_BIN = os.path.join(BIN_DIR, 'scunet-linux-x86_64')
 IFAN_BIN = os.path.join(BIN_DIR, 'ifan-linux-x86_64')
 IFAN_WEIGHTS = os.path.join(BIN_DIR, 'models', 'IFAN.safetensors')
 NIGHTENH_BIN = os.path.join(BIN_DIR, 'nightenh-linux-x86_64')
+SWIN2SR_BIN = os.path.join(BIN_DIR, 'swin2sr-linux-x86_64')
 
 SUPER_RESOLUTION_MODELS = {
     'RealESRGAN x2plus': ('RealESRGAN_x2plus.safetensors', 2),
     'RealESRGAN x4plus': ('RealESRGAN_x4plus.safetensors', 4),
     'RealESRNet x4plus': ('RealESRNet_x4plus.safetensors', 4),
     '4x-RealisticRescaler': ('4x_RealisticRescaler_100000_G.safetensors', 4),
+}
+
+# Swin2SR: the second engine in the Super Resolution menu. The file decides both
+# the task and the scale - there is no flag for either - so the menu labels name
+# the checkpoint and this table says which file each label means. The names are
+# the authors': classical is an image that was resized down with a plain
+# resampler, real-world is one from a camera (real sensor noise, JPEG), and
+# compressed is one that has been through a codec. The lightweight x2 is the
+# small, fast model.
+SWIN2SR_MODELS = {
+    'Swin2SR Classical x4': 'swin2sr-classical-x4.safetensors',
+    'Swin2SR Classical x2': 'swin2sr-classical-x2.safetensors',
+    'Swin2SR Real-World x4': 'swin2sr-realworld-x4.safetensors',
+    'Swin2SR Lightweight x2': 'swin2sr-lightweight-x2.safetensors',
+    'Swin2SR Compressed x4': 'swin2sr-compressed-x4.safetensors',
 }
 
 # NAFNet: the checkpoint alone picks both the task and the width (32 = the
@@ -232,6 +248,19 @@ def run_nightenh(image_bin, model):
     weights = os.path.join(REALESRGAN_MODELS_DIR, NIGHTENH_MODELS[model])
     with gpu_guard.gpu_lock:
         return _run_png_filter(NIGHTENH_BIN, 'nightenh', image_bin, ['-m', weights])
+
+def run_swin2sr(image_bin, model):
+    # Swin2SR streams like NAFNet and MAXIM: `-m` is the whole configuration
+    # (the file decides the task and the scale) and the PNG comes in on stdin and
+    # goes out on stdout. Unlike the other engines here it does NOT fall back to
+    # the CPU when the GPU cannot start - `--device gpu` is what a CUDA build
+    # defaults to and a failed cuInit is an error - so this is the one entry in
+    # bin/ that has to be the CPU-only build on a machine with no driver.
+    if model not in SWIN2SR_MODELS:
+        raise RuntimeError(f'unhandled Swin2SR model: {model}')
+    weights = os.path.join(REALESRGAN_MODELS_DIR, SWIN2SR_MODELS[model])
+    with gpu_guard.gpu_lock:
+        return _run_png_filter(SWIN2SR_BIN, 'swin2sr', image_bin, ['-m', weights])
 
 def _sr_decode_png(image_bin):
     try:
@@ -435,6 +464,12 @@ async def go_local(request, post, deliver_bin_image):
         bin_image = await loop.run_in_executor(None, run_nightenh, image_bin, post['model'])
         await deliver_bin_image(bin_image)
         return
+    if post['model'] in SWIN2SR_MODELS:
+        image_bin = post['image'].file.read()
+        loop = asyncio.get_event_loop()
+        bin_image = await loop.run_in_executor(None, run_swin2sr, image_bin, post['model'])
+        await deliver_bin_image(bin_image)
+        return
     if post['model'] in (
         'Exposure Fusion',
         'Exposure Fusion Knee 0.95',
@@ -473,6 +508,11 @@ async def go_local(request, post, deliver_bin_image):
 def register_provider(register, get_config):
     handler = lambda req, post, deliver: go_local(req, post, deliver)
 
+    # Two engines share this menu. The engine is named in every label because
+    # that is what tells the implementations apart, and the checkpoint names are
+    # the authors' own: Real-ESRGAN trained on a clean downsample, Swin2SR's
+    # real-world checkpoint on real sensor damage and JPEG artefacts, and its
+    # compressed one on an image whose detail a codec has already thrown away.
     register('local', 'Super Resolution', {
         'model': {
             'options': [
@@ -480,7 +520,19 @@ def register_provider(register, get_config):
                 'RealESRGAN x4plus',
                 'RealESRNet x4plus',
                 '4x-RealisticRescaler',
+                'Swin2SR Classical x4',
+                'Swin2SR Classical x2',
+                'Swin2SR Real-World x4',
+                'Swin2SR Lightweight x2',
+                'Swin2SR Compressed x4',
             ],
+            'description': {
+                'Swin2SR Classical x4': 'for an image that was simply resized down 4x',
+                'Swin2SR Classical x2': 'the same, for a 2x upscale',
+                'Swin2SR Real-World x4': 'for a photograph: trained on real camera damage and JPEG artefacts',
+                'Swin2SR Lightweight x2': 'a sixth of the size and about ten times faster, visibly softer',
+                'Swin2SR Compressed x4': 'for an image that has been through a codec, where the detail has been thrown away',
+            },
             'default': 'RealESRGAN x2plus'
         }
     })(handler)

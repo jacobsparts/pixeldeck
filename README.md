@@ -44,7 +44,7 @@ engine do I want".
 
 | menu | tools |
 | --- | --- |
-| Super Resolution | local RealESRGAN x2plus / x4plus, RealESRNet x4plus, 4x-RealisticRescaler; AILabTools upscalers; Replicate swin2sr, HAT, latent-sr and others |
+| Super Resolution | local RealESRGAN x2plus / x4plus, RealESRNet x4plus, 4x-RealisticRescaler and Swin2SR classical x2 / x4, real-world x4, lightweight x2, compressed x4; AILabTools upscalers; Replicate HAT, latent-sr and others |
 | Inpainting | local LaMa, with optional tile and section modes; AILabTools erasure |
 | Background Removal | local RMBG-2.0; Pixian; AILabTools |
 | Auto-Crop | local LocateAnything-3B, prompted for single items, kits or light items |

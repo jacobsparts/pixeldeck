@@ -30,6 +30,7 @@ SCUNET_VERSION=v0.1.0
 IFAN_VERSION=v0.1.0
 NIGHTENH_VERSION=v0.1.2
 ENHANCE_VERSION=v0.1.0
+SWIN2SR_VERSION=v0.2.0
 
 CPU_ONLY=0
 WITH_RMBG=1
@@ -170,6 +171,8 @@ engine ifan-linux-x86_64 \
     "$(github ifan-rs "$IFAN_VERSION" "ifan-linux-x86_64$suffix")"
 engine nightenh-linux-x86_64 \
     "$(github nightenh-rs "$NIGHTENH_VERSION" "nightenh-linux-x86_64$suffix")"
+engine swin2sr-linux-x86_64 \
+    "$(github swin2sr-rs "$SWIN2SR_VERSION" "swin2sr-linux-x86_64$suffix")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"
@@ -240,6 +243,19 @@ fetch "$(github ifan-rs "$IFAN_VERSION" IFAN.safetensors)" \
 for weights in nightenh-lol.safetensors nightenh-delighteffects.safetensors; do
     fetch "$(github nightenh-rs "$NIGHTENH_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
+
+# Swin2SR: super resolution. The file decides the task and the scale - there is
+# no flag for either - so the five files are what fills the Swin2SR menu. The
+# four upstream tasks are all here (classical x2 and x4, real-world x4, the
+# compressed-image track) plus the lightweight x2, which is a sixth of the
+# parameters and visibly softer. compressed-x4 is the one whose head also
+# produces a second, low-resolution image, which the engine writes with --aux.
+for weights in swin2sr-classical-x4.safetensors swin2sr-classical-x2.safetensors \
+               swin2sr-realworld-x4.safetensors swin2sr-lightweight-x2.safetensors \
+               swin2sr-compressed-x4.safetensors; do
+    fetch "$(github swin2sr-rs "$SWIN2SR_VERSION" "$weights")" "$MODEL_DIR/$weights"
+done
+
 # ------------------------------------------------------- gated / built models
 #
 # Two of the models cannot be release assets: RMBG-2.0 is behind a license

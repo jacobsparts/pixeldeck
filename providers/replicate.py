@@ -99,9 +99,6 @@ async def go_replicate(request, post, deliver_bin_image, api_token):
     def replicate_req(model, url, mask_url=None):
         return {
             'controlnet': { "version": "3a3d5371ef3b64c0516314f8846ecc3e56a7356230f898de50a5eb578a74e645", "input": { "image": url, "steps": 50, "denoise": 0.4 } },
-            'swin2sr classical': { "version": "a01b0512004918e67d4022780360a3d54f8de8cb375737f12ac1b0de3f3cf15b", "input": { "image": url, "task": "classical_sr" } },
-            'swin2sr real-world': { "version": "a01b0512004918e67d4022780360a3d54f8de8cb375737f12ac1b0de3f3cf15b", "input": { "image": url, "task": "real_sr" } },
-            'swin2sr compressed': { "version": "a01b0512004918e67d4022780360a3d54f8de8cb375737f12ac1b0de3f3cf15b", "input": { "image": url, "task": "compressed_sr" } },
             'latent-sr': { "version": "80a827435f187a2d4808381dd003ca2871144a1e944d18fa1c4d9bc899ea2fa8", "input": { "image": url } },
             'hcflow-sr': { "version": "5b4c102a77a9cf58a5beab5ebf36118d0526920fb630132b851b4f4c8038b304", "input": { "image": url } },
             'stable-diffusion-upscaler': { "version": "f178f4e343c57e21a880da3e1e08b30bf1f91746073da213453d5ada7f7b4ac4", "input": { "image": url } },
@@ -129,9 +126,6 @@ def register_provider(register, get_config):
         'model': {
             'options': [
                 'controlnet',
-                'swin2sr classical',
-                'swin2sr real-world',
-                'swin2sr compressed',
                 'latent-sr',
                 'hcflow-sr',
                 'stable-diffusion-upscaler',
@@ -146,7 +140,9 @@ def register_provider(register, get_config):
     })(handler)
 
     # Defocus deblurring used to be offered here, through the Replicate model
-    # `ifan-defocus-deblur`. It is not any more: it runs locally, on the IFAN
-    # engine in bin/ifan-linux-x86_64, as `Enhance > IFAN Defocus Deblur` in the
-    # `local` provider - no API key, no upload, and no per-image cost.
+    # `ifan-defocus-deblur`, and super resolution used to include the Replicate
+    # `swin2sr` model. Neither is any more: both run locally - IFAN as
+    # `Enhance > IFAN Defocus Deblur`, Swin2SR as the five Swin2SR entries in
+    # `Super Resolution` in the `local` provider - with no API key, no upload and
+    # no per-image cost.
     return True

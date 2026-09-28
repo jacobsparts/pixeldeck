@@ -280,10 +280,10 @@ def run_hat(image_bin, model):
     # HAT takes file paths rather than streaming a PNG on stdin, so it needs the
     # temporary directory the SCUNet path also uses. `-m` is the whole
     # configuration (the checkpoint decides the model size and the scale). The
-    # GPU is the default and the CPU the fallback, so no --device flag is passed.
-    # `--mem` is a working-set budget, not a tile size: the engine runs one
-    # whole-image pass when it fits inside the budget and picks the largest tile
-    # that does when it does not, so a big product photo cannot OOM the card.
+    # GPU is the default and the CPU the fallback, so no --device flag is passed;
+    # and no --mem either: left out, the engine reads the card's own free VRAM
+    # and tiles the image only when a whole pass would not fit, so the run sizes
+    # itself to whatever card is there and whatever else is holding it.
     if model not in HAT_MODELS:
         raise RuntimeError(f'unhandled HAT model: {model}')
     weights = os.path.join(REALESRGAN_MODELS_DIR, HAT_MODELS[model])
@@ -295,7 +295,7 @@ def run_hat(image_bin, model):
             out_path = os.path.join(tmpdir, 'output.png')
             with open(in_path, 'wb') as f:
                 f.write(png_bytes)
-            cmd = [HAT_BIN, '-m', weights, '-i', in_path, '-o', out_path, '--mem', '2000']
+            cmd = [HAT_BIN, '-m', weights, '-i', in_path, '-o', out_path]
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if res.returncode != 0 or not os.path.exists(out_path):
                 err = res.stderr.decode('utf-8', 'replace')

@@ -25,6 +25,7 @@ MAXIM_BIN = os.path.join(BIN_DIR, 'maxim-linux-x86_64')
 SCUNET_BIN = os.path.join(BIN_DIR, 'scunet-linux-x86_64')
 IFAN_BIN = os.path.join(BIN_DIR, 'ifan-linux-x86_64')
 IFAN_WEIGHTS = os.path.join(BIN_DIR, 'models', 'IFAN.safetensors')
+NIGHTENH_BIN = os.path.join(BIN_DIR, 'nightenh-linux-x86_64')
 
 SUPER_RESOLUTION_MODELS = {
     'RealESRGAN x2plus': ('RealESRGAN_x2plus.safetensors', 2),
@@ -214,6 +215,23 @@ def run_ifan(image_bin):
                 raise
             _IFAN_WANTS_CPU[0] = True
             return _run_png_filter(IFAN_BIN, 'ifan', image_bin, args + ['--cpu'])
+# nightenh: one architecture, two released checkpoints, and the checkpoint
+# alone picks what the model was trained for. `-m` is the whole configuration.
+# The two cases are not interchangeable and the engine cannot tell you that you
+# picked the wrong one - the light-effects suppression model brightens a night
+# photo 1.21x where the low-light one brightens it 2.51x - so the labels say
+# which is which.
+NIGHTENH_MODELS = {
+    'Night Enhancement (low light)': 'nightenh-lol.safetensors',
+    'Light Effects Suppression': 'nightenh-delighteffects.safetensors',
+}
+
+def run_nightenh(image_bin, model):
+    if model not in NIGHTENH_MODELS:
+        raise RuntimeError(f'unhandled nightenh model: {model}')
+    weights = os.path.join(REALESRGAN_MODELS_DIR, NIGHTENH_MODELS[model])
+    with gpu_guard.gpu_lock:
+        return _run_png_filter(NIGHTENH_BIN, 'nightenh', image_bin, ['-m', weights])
 
 def _sr_decode_png(image_bin):
     try:
@@ -409,6 +427,10 @@ async def go_local(request, post, deliver_bin_image):
         image_bin = post['image'].file.read()
         loop = asyncio.get_event_loop()
         bin_image = await loop.run_in_executor(None, run_ifan, image_bin)
+    if post['model'] in NIGHTENH_MODELS:
+        image_bin = post['image'].file.read()
+        loop = asyncio.get_event_loop()
+        bin_image = await loop.run_in_executor(None, run_nightenh, image_bin, post['model'])
         await deliver_bin_image(bin_image)
         return
     if post['model'] in (
@@ -499,6 +521,16 @@ def register_provider(register, get_config):
                 'IFAN Defocus Deblur',
             ],
             'default': 'NAFNet Deblur (fast)',
+        },
+    })(handler)
+
+    register('local', 'Night Enhancement', {
+        'model': {
+            'options': [
+                'Night Enhancement (low light)',
+                'Light Effects Suppression',
+            ],
+            'default': 'Night Enhancement (low light)',
         },
     })(handler)
 

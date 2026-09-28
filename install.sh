@@ -28,6 +28,7 @@ NAFNET_VERSION=v0.2.0
 MAXIM_VERSION=v0.2.0
 SCUNET_VERSION=v0.1.0
 IFAN_VERSION=v0.1.0
+NIGHTENH_VERSION=v0.1.2
 ENHANCE_VERSION=v0.1.0
 
 CPU_ONLY=0
@@ -167,6 +168,8 @@ engine scunet-linux-x86_64 \
     "$(github scunet-rs "$SCUNET_VERSION" "scunet-linux-x86_64$suffix")"
 engine ifan-linux-x86_64 \
     "$(github ifan-rs "$IFAN_VERSION" "ifan-linux-x86_64$suffix")"
+engine nightenh-linux-x86_64 \
+    "$(github nightenh-rs "$NIGHTENH_VERSION" "nightenh-linux-x86_64$suffix")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"
@@ -228,6 +231,15 @@ done
 fetch "$(github ifan-rs "$IFAN_VERSION" IFAN.safetensors)" \
       "$MODEL_DIR/IFAN.safetensors"
 
+# nightenh: night image enhancement. Two checkpoints of the same architecture,
+# and the checkpoint is the whole choice - the low-light one for darkness and
+# the de-light-effects one for glare on a scene that is already lit. They are
+# release assets of nightenh-rs, under the upstream authors' non-commercial
+# terms rather than this project's licence; THIRD_PARTY_LICENSES.md says which
+# files that covers.
+for weights in nightenh-lol.safetensors nightenh-delighteffects.safetensors; do
+    fetch "$(github nightenh-rs "$NIGHTENH_VERSION" "$weights")" "$MODEL_DIR/$weights"
+done
 # ------------------------------------------------------- gated / built models
 #
 # Two of the models cannot be release assets: RMBG-2.0 is behind a license

@@ -41,6 +41,7 @@ toolkit, no cuDNN, no PyTorch, no Python.
 | MAXIM restoration | [jacobsparts/maxim-rs](https://github.com/jacobsparts/maxim-rs) | MIT (c) 2026 Jacob Stoner; an independent reimplementation of [google-research/maxim](https://github.com/google-research/maxim) (Apache-2.0, (c) 2022 Google LLC) |
 | SCUNet denoising | [jacobsparts/scunet-rs](https://github.com/jacobsparts/scunet-rs) | MIT (c) 2026 Jacob Stoner; an independent implementation of [cszn/SCUNet](https://github.com/cszn/SCUNet) (Apache-2.0, (c) Kai Zhang) |
 | IFAN defocus deblurring | [jacobsparts/ifan-rs](https://github.com/jacobsparts/ifan-rs) | MIT (c) 2026 Jacob Stoner for the engine; **AGPL-3.0** for `tools/` and the checkpoint, which are derived from the authors' release — see the note below |
+| nightenh night enhancement and light-effects suppression | [jacobsparts/nightenh-rs](https://github.com/jacobsparts/nightenh-rs) | MIT (c) 2026 Jacob Stoner; an independent reimplementation of [jinyeying/night-enhancement](https://github.com/jinyeying/night-enhancement) |
 | exposure, tone and color correction | [jacobsparts/adaptive-enhance](https://github.com/jacobsparts/adaptive-enhance) | MIT (c) 2017 Zhenqiang Ying |
 
 `adaptive-enhance` is a port of the `adaptiveImageEnhancement` module of
@@ -66,17 +67,20 @@ reimplements [NAFNet](https://github.com/megvii-research/NAFNet) (MIT,
 (c) 2022 megvii-model); `scunet-rs` reimplements SCUNet, whose vendored upstream
 network module and reference transcription are Apache-2.0 works of the same
 author.
+(c) 2022 megvii-model); `nightenh-rs` reimplements the generator from
+[night-enhancement](https://github.com/jinyeying/night-enhancement), whose
+code and weights are MIT for academic and other non-commercial uses.
 
 ## Model weights
 
 `install.sh` downloads these too, or builds them from the upstream checkpoint.
-**None of them are distributed with Pixeldeck**, and two of them are licensed
+**None of them are distributed with Pixeldeck**, and three of them are licensed
 for non-commercial use only — read the terms before you download them.
 
 | model | used for | license |
 | --- | --- | --- |
 | RealESRGAN_x4plus / x2plus / RealESRNet_x4plus | Super Resolution | BSD-3-Clause, (c) 2021 Xintao Wang ([Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)) |
-| 4x_RealisticRescaler_100000_G | Super Resolution | see `MODEL_LICENSE-RealisticRescaler.txt` in the realesrgan-rs release |
+| 4x_RealisticRescaler_100000_G | Super Resolution | see `MODEL_LICENSE-RealisticRescaler.txt` in the realesrgan-rs repository |
 | big-lama | Inpainting | Apache-2.0, [saicinpainting](https://github.com/advimman/lama) |
 | RMBG-2.0 | Background Removal | **non-commercial only**, (c) [BRIA](https://bria.ai) — [model card](https://huggingface.co/briaai/RMBG-2.0) |
 | LocateAnything-3B | Auto-Crop | **non-commercial research and evaluation only**, NVIDIA — [model card](https://huggingface.co/nvidia/LocateAnything-3B) |
@@ -84,6 +88,7 @@ for non-commercial use only — read the terms before you download them.
 | maxim-lol, -fivek, -sidd, -gopro, -reds, -realblur-j, -realblur-r, -rain13k, -raindrop, -sots-indoor, -sots-outdoor | Maxim | Apache-2.0, (c) 2022 Google LLC ([MAXIM](https://github.com/google-research/maxim)), converted to `.safetensors` |
 | scunet-color-* (five) | Enhance (denoise) | Apache-2.0, (c) Kai Zhang ([SCUNet](https://github.com/cszn/SCUNet), released on the [KAIR](https://github.com/cszn/KAIR) releases page), converted to `.safetensors` |
 | IFAN | Enhance (defocus deblur) | **AGPL-3.0**, (c) Junyong Lee, Hyeongseok Son, Jaesung Rim, Sunghyun Cho and Seungyong Lee, POSTECH ([IFAN](https://github.com/codeslake/IFAN), CVPR 2021), converted to `.safetensors` — the one checkpoint here under a copyleft licence |
+| nightenh-lol, nightenh-delighteffects | Night Enhancement | **non-commercial only** — MIT for academic and other non-commercial uses, (c) Yeying Jin, Wenhan Yang and Robby T. Tan ([night-enhancement](https://github.com/jinyeying/night-enhancement), ECCV 2022); `MODEL_LICENSE-NIGHTENH.txt` in the nightenh-rs repository carries the upstream text |
 
 ## Image APIs
 

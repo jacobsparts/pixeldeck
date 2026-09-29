@@ -255,6 +255,10 @@ const app = {
                 pluginComponents: pluginMenuComponents,
                 pluginImageControls: pluginImageControls,
                 options: {},
+                configSections: null,
+                showConfig: false,
+                configBusy: false,
+                configError: '',
         }},
         components: { 'pixeldeck-editor': pixeldeckEditor, 'dropdown-menu': dropdownMenu },
                 async created(){
@@ -317,6 +321,13 @@ const app = {
                                 ...presets.map(n => ({text: `${n}${n === 4 ? ' (Default)' : ''}`, value: n})),
                                 {text: 'Custom...', value: 'custom'},
                         ];
+                },
+                configHint(){
+                        // What a field will be when it is left alone. An empty box
+                        // into which nothing was typed means the built-in default,
+                        // and for an endpoint that default is a real address worth
+                        // showing rather than hiding behind '(not set)'.
+                        return field => field.input || field.default || '(not set)';
                 },
         },
         methods: {
@@ -631,6 +642,77 @@ const app = {
                 closePane(){
                         this.showPane = false;
                 },
+                configFields(view){
+                        return view.sections.map(section => ({
+                                name: section.name,
+                                fields: section.fields.map(field => ({
+                                        ...field,
+                                        // A secret is write-only, so its input always starts
+                                        // empty. Anything else shows its current value, or -
+                                        // when the file says nothing - the default from
+                                        // config.example.json, which for an endpoint is the
+                                        // address actually in use.
+                                        input: field.secret ? '' : (field.set ? (field.value || '') : (field.default || '')),
+                                        dirty: false,
+                                })),
+                        }));
+                },
+                async openConfig(){
+                        this.configError = '';
+                        const resp = await fetch('/pixeldeck/config');
+                        this.configSections = this.configFields(await resp.json());
+                        this.showConfig = true;
+                },
+                closeConfig(){
+                        this.showConfig = false;
+                },
+                refreshEditorSchemas(){
+                        // Tools appear and disappear with their credentials, so every
+                        // mounted editor has to rebuild its menus; the grid above only
+                        // knows the schema it was created with.
+                        const refs = this.$refs.editors || [];
+                        const editors = Array.isArray(refs) ? refs : [refs];
+                        editors.forEach(editor => editor?.loadSchema?.());
+                },
+                async saveConfig(){
+                        const patch = {};
+                        for(const section of this.configSections){
+                                for(const field of section.fields){
+                                        if(!field.dirty){continue}
+                                        (patch[section.name] = patch[section.name] || {})[field.key] = field.input === '' ? null : field.input;
+                                }
+                        }
+                        if(!Object.keys(patch).length){
+                                // Nothing to write, so nothing to stay open for either.
+                                this.closeConfig();
+                                return;
+                        }
+                        this.configBusy = true;
+                        this.configError = '';
+                        try {
+                                const resp = await fetch('/pixeldeck/config', {
+                                        method: 'PUT',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify(patch),
+                                });
+                                const body = await resp.text();
+                                if(!resp.ok){
+                                        throw new Error(body);
+                                }
+                                const schema = await (await fetch('/pixeldeck/schema')).json();
+                                this.schema = schema;
+                                this.refreshEditorSchemas();
+                                // A save that worked is the end of the dialog: there is
+                                // nothing left to say, and the menus behind it have
+                                // already changed.
+                                this.closeConfig();
+                        } catch(error) {
+                                // A refused write stays open, with the reason on it.
+                                this.configError = String(error.message || error);
+                        } finally {
+                                this.configBusy = false;
+                        }
+                },
                 download_all(){
                         this.batchBroadcast(['downloadJPG']);
                 },
@@ -696,6 +778,8 @@ const app = {
         <span class="shortcut" @click="download_all">Download All</span>
         <span class="shortcut" @click="download_zip">Download Zip</span>
         <component v-for="(comp, idx) in pluginComponents" :key="idx" :is="comp" :app="this" />
+        <div class="sep"></div>
+        <span class="shortcut" @click="openConfig" title="Provider configuration">Config</span>
 </div>
 <div v-show="selected === null" style="position: relative;">
         <div class="menubar" style="justify-content: center; border-bottom: 1px solid #ddd; visibility: hidden;">
@@ -748,6 +832,27 @@ const app = {
                         </template>
                 </div>
                 <button class="modal-go" @click="paneGo">Go</button>
+        </div>
+</div>
+
+<div v-if="showConfig" class="modal-backdrop" @click.self="closeConfig">
+        <div class="modal">
+                <div class="modal-header">
+                        <span>Configuration</span>
+                        <span class="shortcut" @click="closeConfig">\u2715</span>
+                </div>
+                <div class="modal-body" v-if="configSections">
+                        <p class="config-hint">Credentials and endpoints for the image APIs. A provider without credentials is simply not offered. This writes config.json; secrets are never sent back to the browser. Leave a field empty to use the default shown in it.</p>
+                        <div v-for="section in configSections" :key="section.name" class="config-section">
+                                <div class="config-section-name">{{ section.name }}</div>
+                                <label v-for="field in section.fields" :key="field.key" class="config-field">
+                                        <span class="config-field-name">{{ field.key }}</span>
+                                        <input class="config-input" :type="field.secret ? 'password' : 'text'" v-model="field.input" @input="field.dirty = true" autocomplete="off" spellcheck="false" :placeholder="configHint(field)"/>
+                                </label>
+                        </div>
+                        <p v-if="configError" class="config-error">{{ configError }}</p>
+                </div>
+                <button class="modal-go" :disabled="configBusy" @click="saveConfig">Save</button>
         </div>
 </div>
 

@@ -14,6 +14,12 @@ MIN_INTERVAL = 5  # seconds between requests
 
 DEFAULT_MODEL = 'gpt-image-2'
 
+# Where this API lives. `openai.base_url` in config.json overrides the host, so a
+# mirror or a local stand-in can be pointed at instead; this is the real one.
+BASE_URL = 'https://api.openai.com'
+EDIT_PATH = '/v1/images/edits'
+GENERATE_PATH = '/v1/images/generations'
+
 
 def _api_key():
     """The OpenAI API key, read per request so config edits take effect at once."""
@@ -113,10 +119,11 @@ def _edit(image_bytes, mime_type, prompt, image_config, model, api_key):
         boundary,
     )
 
-    conn = http.client.HTTPSConnection('api.openai.com', 443)
+    use_tls, host, port, path = config.api_endpoint('openai', BASE_URL, EDIT_PATH)
+    conn = (http.client.HTTPSConnection if use_tls else http.client.HTTPConnection)(host, port)
     conn.request(
         'POST',
-        '/v1/images/edits',
+        path,
         body=body,
         headers={
             'Authorization': f'Bearer {api_key}',
@@ -146,10 +153,11 @@ def _generate(prompt, image_config, model, api_key):
         body['background'] = background
     body['output_format'] = 'png'
 
-    conn = http.client.HTTPSConnection('api.openai.com', 443)
+    use_tls, host, port, path = config.api_endpoint('openai', BASE_URL, GENERATE_PATH)
+    conn = (http.client.HTTPSConnection if use_tls else http.client.HTTPConnection)(host, port)
     conn.request(
         'POST',
-        '/v1/images/generations',
+        path,
         body=json.dumps(body),
         headers={
             'Authorization': f'Bearer {api_key}',

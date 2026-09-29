@@ -152,18 +152,30 @@ journalctl --user -u pixeldeck.service -f
 
 `config.json` is the only place settings live. `config.example.json` is the
 template and lists every section and key there is; the installer copies it, and
-the **Config** button in the menubar edits it from the browser.
+the **Config** button at the right-hand end of the main toolbar edits it from
+the browser — no image needs to be open.
 
 ```json
 {
-  "gemini": { "api_key": "" },
+  "gemini": {
+    "api_key": "",
+    "base_url": "https://generativelanguage.googleapis.com"
+  },
   "pixian": { "username": "", "password": "" }
 }
 ```
 
+`base_url` sends a provider somewhere else: a mirror, a proxy, or an
+OpenAI-compatible server on your own machine. It is the API's root, so
+`http://127.0.0.1:11434/v1` addresses that server with the usual
+`/v1/images/edits` appended, and a path the root already ends in is not repeated
+— pasting the whole endpoint URL back in gives the same address it came from. A
+value that is not an http(s) URL is refused when you save it.
+
 A section with no credentials is simply not registered, so those tools are
 absent from the menus. Saving a change rebuilds the tool list on the spot —
-paste a key and the menu appears, clear it and the menu goes away. Keys are
+paste a key and the menu appears, clear it and the menu goes away — and the
+dialog closes. A field left empty goes back to the default shown in it. Keys are
 never sent back to the browser, and `config.json` is written mode 600.
 
 Editing `config.json` in a text editor works too, but the tool list is built at

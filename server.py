@@ -221,13 +221,14 @@ def config_view():
     """Every configurable setting, with secrets reported but never sent.
 
     The shape of the view comes from config.example.json, so a section or key
-    that the file does not list cannot be edited (or written) from the UI.
+    that the file does not list cannot be edited (or written) from the UI, and
+    the value the example gives a key is that key's default.
     """
     values = config.get_config()
     sections = []
     for section, fields in config.field_spec().items():
         entries = []
-        for key in fields:
+        for key, default in fields.items():
             value = values.get(section, {}).get(key)
             secret = config.is_secret(key)
             entries.append({
@@ -235,7 +236,11 @@ def config_view():
                 'secret': secret,
                 # A secret is write-only: the UI is told whether it is set, not
                 # what it is.
-                'value': None if secret else (value or ''),
+                'value': None if secret else (value or default or ''),
+                # What is in force when the file says nothing, so a field like an
+                # endpoint shows the address actually being used rather than an
+                # empty box that looks like nothing is configured.
+                'default': default or '',
                 'set': bool(value),
             })
         sections.append({'name': section, 'fields': entries})

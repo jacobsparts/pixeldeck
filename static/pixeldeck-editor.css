@@ -279,9 +279,6 @@ image-masker.busy {
 	margin: 0.5rem 0;
 	color: #999;
 }
-.config-message {
-	color: #067d17;
-}
 .config-error {
 	color: #c00;
 	white-space: pre-wrap;

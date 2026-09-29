@@ -1,9 +1,11 @@
 {
   "gemini": {
-    "api_key": ""
+    "api_key": "",
+    "base_url": "https://generativelanguage.googleapis.com"
   },
   "openai": {
-    "api_key": ""
+    "api_key": "",
+    "base_url": "https://api.openai.com"
   },
   "pixian": {
     "username": "",

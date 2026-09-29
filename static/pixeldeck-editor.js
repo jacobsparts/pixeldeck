@@ -44,11 +44,6 @@ export const pixeldeckEditor = {
 		updatingFromModel: false,
 		canceled: false,
 		inBatch: false,
-		configSections: null,
-		showConfig: false,
-		configBusy: false,
-		configMessage: '',
-		configError: '',
 	}},
 	created(){
 		this.loadSchema();
@@ -391,63 +386,6 @@ export const pixeldeckEditor = {
 		},
 		closePane(){
 			this.showPane = false;
-		},
-		configFields(view){
-			return view.sections.map(section => ({
-				name: section.name,
-				fields: section.fields.map(field => ({
-					...field,
-					// A secret is write-only, so its input always starts empty.
-					input: field.secret ? '' : (field.value || ''),
-					dirty: false,
-				})),
-			}));
-		},
-		async openConfig(){
-			this.showConfig = true;
-			this.configMessage = '';
-			this.configError = '';
-			const resp = await fetch(this.baseUrl + 'config');
-			this.configSections = this.configFields(await resp.json());
-		},
-		closeConfig(){
-			this.showConfig = false;
-		},
-		async saveConfig(){
-			const patch = {};
-			for(const section of this.configSections){
-				for(const field of section.fields){
-					if(!field.dirty){continue}
-					(patch[section.name] = patch[section.name] || {})[field.key] = field.input === '' ? null : field.input;
-				}
-			}
-			if(!Object.keys(patch).length){
-				this.configMessage = 'Nothing changed';
-				return;
-			}
-			this.configBusy = true;
-			this.configError = '';
-			this.configMessage = '';
-			try {
-				const resp = await fetch(this.baseUrl + 'config', {
-					method: 'PUT',
-					headers: {'Content-Type': 'application/json'},
-					body: JSON.stringify(patch),
-				});
-				const body = await resp.text();
-				if(!resp.ok){
-					throw new Error(body);
-				}
-				this.configSections = this.configFields(JSON.parse(body));
-				// Tools appear and disappear with their credentials, so the
-				// menus have to be rebuilt from the schema.
-				await this.loadSchema();
-				this.configMessage = 'Saved';
-			} catch(error) {
-				this.configError = String(error.message || error);
-			} finally {
-				this.configBusy = false;
-			}
 		},
 		async downloadPNG(){
 			await this.waitForImageMasker();
@@ -870,8 +808,6 @@ export const pixeldeckEditor = {
 		<div class="sep"></div>
 		<span class="dim">{{ width }}\u00d7{{ height }}</span>
 	</template>
-	<div class="sep"></div>
-	<span class="shortcut" @click="openConfig" title="Provider configuration">Config</span>
 </div>
 <div v-if="active && busy" class="editor-menubar" style="justify-content: center; position: absolute; left: 0; right: 0; z-index: 50; opacity: 0.85;">
 	<span v-if="modelValue" class="shortcut" @click="$emit('close')" style="position: absolute; left: 0.25rem;">Close</span>
@@ -904,28 +840,6 @@ export const pixeldeckEditor = {
 			</template>
 		</div>
 		<button class="modal-go" :disabled="busy" @click="paneGo">Go</button>
-	</div>
-</div>
-<div v-if="showConfig" class="modal-backdrop" @click.self="closeConfig">
-	<div class="modal">
-		<div class="modal-header">
-			<span>Configuration</span>
-			<span class="shortcut" @click="closeConfig">\u2715</span>
-		</div>
-		<div class="modal-body" v-if="configSections">
-			<p class="config-hint">Credentials for the image APIs. A provider without credentials is simply not offered. This writes config.json; secrets are never sent back to the browser.</p>
-			<div v-for="section in configSections" :key="section.name" class="config-section">
-				<div class="config-section-name">{{ section.name }}</div>
-				<label v-for="field in section.fields" :key="field.key" class="config-field">
-					<span class="config-field-name">{{ field.key }}</span>
-					<input class="config-input" :type="field.secret ? 'password' : 'text'" v-model="field.input" @input="field.dirty = true" autocomplete="off" :placeholder="field.set ? '(configured)' : '(not set)'"/>
-				</label>
-			</div>
-			<p class="config-hint">Clear a field and save to remove that setting.</p>
-			<p v-if="configError" class="config-error">{{ configError }}</p>
-			<p v-else-if="configMessage" class="config-message">{{ configMessage }}</p>
-		</div>
-		<button class="modal-go" :disabled="configBusy" @click="saveConfig">Save</button>
 	</div>
 </div>
 </div>`

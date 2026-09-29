@@ -10,6 +10,7 @@ provider whose section has no credentials simply does not register itself.
 import json
 import os
 import tempfile
+from urllib.parse import urlsplit
 
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 EXAMPLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.example.json')
@@ -53,6 +54,58 @@ def field_spec():
         return {}
 
 
+def _split_base(section, value):
+    """Parse a base URL, or refuse it with the reason."""
+    parts = urlsplit(value)
+    if parts.scheme not in ('http', 'https') or not parts.hostname:
+        raise ValueError(f'{section}.base_url must be an http(s) URL, got {value!r}')
+    return parts
+
+
+def check_base_url(section, value):
+    """Refuse an endpoint no request could use; an empty one means the default.
+
+    Called before a patch is written. A saved value that cannot be parsed is
+    worse than a rejected edit: the provider would then fail on every image, far
+    from the moment the typo was made.
+    """
+    if value is None or not value.strip():
+        return
+    _split_base(section, value.strip())
+
+
+def api_endpoint(section, default_url, path):
+    """Where a provider's request goes: (use_tls, host, port, path).
+
+    ``base_url`` in a section moves that provider's endpoint, for a mirror, a
+    proxy or a local stand-in. It is the API's ROOT - scheme and host - and the
+    request's own path is appended to whatever path the root carries, so a
+    prefix like ``https://proxy.example/gemini`` works.
+
+    A part of the endpoint's own path that the root already ends with is not
+    repeated. Both halves of that are worth having: the field's default IS the
+    whole endpoint URL, so pasting one back must not double the path, and an
+    OpenAI-compatible server elsewhere is addressed by a base that already ends
+    in ``/v1``, which is the first thing a person types.
+
+    Nothing here is stored: the value is read per request, so a config edit takes
+    effect on the next image rather than on the next restart.
+    """
+    raw = (get_config(section).get('base_url') or '').strip() or default_url
+    parts = _split_base(section, raw)
+    root = [seg for seg in parts.path.split('/') if seg]
+    want = [seg for seg in path.split('/') if seg]
+    # The longest overlap between what the root ends with and what the endpoint
+    # path begins with is shared, so neither is written twice.
+    shared = 0
+    for k in range(min(len(root), len(want)), 0, -1):
+        if root[-k:] == want[:k]:
+            shared = k
+            break
+    return parts.scheme == 'https', parts.hostname, parts.port, \
+        '/' + '/'.join(root + want[shared:])
+
+
 def save_config(cfg):
     """Write config.json, replacing it atomically so readers never see a partial file."""
     directory = os.path.dirname(CONFIG_FILE)
@@ -77,6 +130,10 @@ def update_config(patch):
     Only sections and keys listed in config.example.json are accepted, so a
     request cannot write arbitrary data into the file. A key set to ``None`` is
     removed; a key that is absent from the patch is left alone.
+
+    An endpoint is checked here, while the edit that made it is still in hand:
+    saving a URL that no request could parse would fail later, on every image,
+    with nothing to connect it to the typo.
     """
     spec = field_spec()
     cfg = load_config()
@@ -92,6 +149,8 @@ def update_config(patch):
             if value is None:
                 target.pop(key, None)
             elif isinstance(value, str):
+                if key == 'base_url':
+                    check_base_url(section, value)
                 target[key] = value
             else:
                 raise ValueError(f'config value {section}.{key} must be a string or null')

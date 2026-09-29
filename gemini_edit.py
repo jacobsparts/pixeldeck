@@ -14,6 +14,11 @@ MIN_INTERVAL = 5  # seconds between requests
 
 DEFAULT_MODEL = 'gemini-3.1-flash-image'
 
+# Where this API lives. `gemini.base_url` in config.json overrides the host, so
+# a mirror or a local stand-in can be pointed at instead; this is the real one.
+BASE_URL = 'https://generativelanguage.googleapis.com'
+INTERACTIONS_PATH = '/v1beta/interactions'
+
 
 def _api_key():
     """The Gemini API key, read per request so config edits take effect at once."""
@@ -98,10 +103,11 @@ def edit_image(image_bytes, mime_type, prompt, image_config=None, model=None, mo
         'store': False,
     }
 
-    conn = http.client.HTTPSConnection('generativelanguage.googleapis.com', 443)
+    use_tls, host, port, path = config.api_endpoint('gemini', BASE_URL, INTERACTIONS_PATH)
+    conn = (http.client.HTTPSConnection if use_tls else http.client.HTTPConnection)(host, port)
     conn.request(
         'POST',
-        '/v1beta/interactions',
+        path,
         body=json.dumps(body),
         headers={
             'Content-Type': 'application/json',

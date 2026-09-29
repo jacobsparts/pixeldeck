@@ -263,8 +263,9 @@ for weights in hat-s-x4.safetensors hat-x4.safetensors hat-l-x4.safetensors; do
     fetch "$(github hat-rs "$HAT_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
 
-# HCFlow: the one stochastic engine - a conditional flow, not a regression, so
-# the sampled texture is its characteristic look. One checkpoint and no option.
+# HCFlow: the one stochastic engine - a conditional flow rather than a
+# regression, so its output is a draw unless a temperature is given. One
+# checkpoint and no option; the provider asks it for the mean (--eps-std 0).
 fetch "$(github hcflow-rs "$HCFLOW_VERSION" "hcflow_x4.safetensors")" \
       "$MODEL_DIR/hcflow_x4.safetensors"
 

@@ -32,6 +32,7 @@ NIGHTENH_VERSION=v0.1.0
 ENHANCE_VERSION=v0.1.0
 SWIN2SR_VERSION=v0.2.0
 HAT_VERSION=v0.1.0
+HCFLOW_VERSION=v0.1.0
 
 WITH_RMBG=1
 WITH_LOCATE=1
@@ -168,6 +169,8 @@ engine swin2sr-linux-x86_64 \
     "$(github swin2sr-rs "$SWIN2SR_VERSION" "swin2sr-linux-x86_64")"
 engine hat-linux-x86_64 \
     "$(github hat-rs "$HAT_VERSION" "hat-linux-x86_64")"
+engine hcflow-linux-x86_64 \
+    "$(github hcflow-rs "$HCFLOW_VERSION" "hcflow-linux-x86_64")"
 
 for tool in adaptive-enhance iagcwd white-balance; do
     engine "$tool" "$(github adaptive-enhance "$ENHANCE_VERSION" "$tool")"
@@ -259,6 +262,11 @@ done
 for weights in hat-s-x4.safetensors hat-x4.safetensors hat-l-x4.safetensors; do
     fetch "$(github hat-rs "$HAT_VERSION" "$weights")" "$MODEL_DIR/$weights"
 done
+
+# HCFlow: the one stochastic engine - a conditional flow, not a regression, so
+# the sampled texture is its characteristic look. One checkpoint and no option.
+fetch "$(github hcflow-rs "$HCFLOW_VERSION" "hcflow_x4.safetensors")" \
+      "$MODEL_DIR/hcflow_x4.safetensors"
 
 # ------------------------------------------------------- gated / built models
 #

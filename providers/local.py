@@ -28,6 +28,8 @@ IFAN_WEIGHTS = os.path.join(BIN_DIR, 'models', 'IFAN.safetensors')
 NIGHTENH_BIN = os.path.join(BIN_DIR, 'nightenh-linux-x86_64')
 SWIN2SR_BIN = os.path.join(BIN_DIR, 'swin2sr-linux-x86_64')
 HAT_BIN = os.path.join(BIN_DIR, 'hat-linux-x86_64')
+HCFLOW_BIN = os.path.join(BIN_DIR, 'hcflow-linux-x86_64')
+HCFLOW_WEIGHTS = os.path.join(REALESRGAN_MODELS_DIR, 'hcflow_x4.safetensors')
 
 SUPER_RESOLUTION_MODELS = {
     'RealESRGAN x2plus': ('RealESRGAN_x2plus.safetensors', 2),
@@ -313,6 +315,21 @@ def run_hat(image_bin, model):
             except OSError:
                 pass
 
+def run_hcflow(image_bin):
+    # HCFlow streams like NAFNet and MAXIM: the PNG comes in on stdin and goes
+    # out on stdout. There is one checkpoint and no model option. It is the
+    # family's one STOCHASTIC engine - a conditional flow, not a regression, so
+    # the latent noise is part of the output. A fixed `--seed` is passed so an
+    # editor gets a reproducible result; the checkpoint's own temperature
+    # (`--eps-std 0.9`) is left alone, because the sampled output is the model's
+    # characteristic look - the deterministic mean `--eps-std 0` is a different,
+    # smoother image, and that is not what this menu entry is for. The GPU is
+    # the default and the CPU the fallback, and the engine guards the card's
+    # free VRAM itself, so no device or memory flag is passed.
+    with gpu_guard.gpu_lock:
+        return _run_png_filter(HCFLOW_BIN, 'hcflow', image_bin,
+                               ['-m', HCFLOW_WEIGHTS, '--seed', '0'])
+
 def _sr_decode_png(image_bin):
     try:
         im = Image.open(io.BytesIO(image_bin))
@@ -536,6 +553,12 @@ async def go_local(request, post, deliver_bin_image):
         bin_image = await loop.run_in_executor(None, run_hat, image_bin, post['model'])
         await deliver_bin_image(bin_image)
         return
+    if post['model'] == 'HCFlow x4':
+        image_bin = post['image'].file.read()
+        loop = asyncio.get_event_loop()
+        bin_image = await loop.run_in_executor(None, run_hcflow, image_bin)
+        await deliver_bin_image(bin_image)
+        return
     if post['model'] in (
         'Exposure Fusion',
         'Exposure Fusion Knee 0.95',
@@ -594,6 +617,7 @@ def register_provider(register, get_config):
                 'HAT x4 (fast)',
                 'HAT x4',
                 'HAT x4 (best)',
+                'HCFlow x4',
             ],
             'description': {
                 'Swin2SR Classical x4': 'for an image that was simply resized down 4x',
@@ -604,6 +628,7 @@ def register_provider(register, get_config):
                 'HAT x4 (fast)': 'the small model: fast, and the one to reach for',
                 'HAT x4': 'the base model',
                 'HAT x4 (best)': 'the large model: slowest, and the best',
+                'HCFlow x4': 'a conditional flow, so it synthesises texture rather than smoothing it',
             },
             'default': 'RealESRGAN x2plus'
         }

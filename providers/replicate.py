@@ -99,7 +99,6 @@ async def go_replicate(request, post, deliver_bin_image, api_token):
     def replicate_req(model, url, mask_url=None):
         return {
             'latent-sr': { "version": "80a827435f187a2d4808381dd003ca2871144a1e944d18fa1c4d9bc899ea2fa8", "input": { "image": url } },
-            'hcflow-sr': { "version": "5b4c102a77a9cf58a5beab5ebf36118d0526920fb630132b851b4f4c8038b304", "input": { "image": url } },
         }[model]
 
     image_bin = post['image'].file.read()
@@ -123,12 +122,11 @@ def register_provider(register, get_config):
         'model': {
             'options': [
                 'latent-sr',
-                'hcflow-sr',
             ],
             'description': {
                 'latent-sr': 'latent diffusion superresolution, good with texture, use 512x512 input',
             },
-            'default': 'hcflow-sr',
+            'default': 'latent-sr',
         },
     })(handler)
 

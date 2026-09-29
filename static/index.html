@@ -327,7 +327,13 @@ const app = {
                         // into which nothing was typed means the built-in default,
                         // and for an endpoint that default is a real address worth
                         // showing rather than hiding behind '(not set)'.
-                        return field => field.input || field.default || '(not set)';
+                        //
+                        // A SET secret shows only that it is set: its value is not
+                        // sent here, so there is nothing else it could show, and
+                        // saying '(not set)' about a key that is in the file would
+                        // be a plain lie.
+                        return field => field.input
+                                || (field.secret && field.set ? '(configured)' : (field.default || '(not set)'));
                 },
         },
         methods: {

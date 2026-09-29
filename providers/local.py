@@ -319,16 +319,20 @@ def run_hcflow(image_bin):
     # HCFlow streams like NAFNet and MAXIM: the PNG comes in on stdin and goes
     # out on stdout. There is one checkpoint and no model option. It is the
     # family's one STOCHASTIC engine - a conditional flow, not a regression, so
-    # the latent noise is part of the output. A fixed `--seed` is passed so an
-    # editor gets a reproducible result; the checkpoint's own temperature
-    # (`--eps-std 0.9`) is left alone, because the sampled output is the model's
-    # characteristic look - the deterministic mean `--eps-std 0` is a different,
-    # smoother image, and that is not what this menu entry is for. The GPU is
-    # the default and the CPU the fallback, and the engine guards the card's
-    # free VRAM itself, so no device or memory flag is passed.
+    # the latent noise would be part of the output - and `--eps-std 0` asks it
+    # for the deterministic mean instead: the same graph run once, which is the
+    # reproducible result a menu entry owes its user. The sampled modes are a
+    # deliberate choice left to the command line, not a default to inherit: two
+    # seeds differ from each other by about as much as either differs from the
+    # mean (~1.5/255 mean, worst 144), so the draw is the flow's own invention
+    # rather than recovered detail, and a super-resolution entry that invents
+    # something different every run is the wrong thing to ship. With eps_std 0
+    # there is nothing random left, so no seed is passed either. The GPU is the
+    # default and the CPU the fallback, and the engine guards the card's free
+    # VRAM itself, so no device or memory flag is passed.
     with gpu_guard.gpu_lock:
         return _run_png_filter(HCFLOW_BIN, 'hcflow', image_bin,
-                               ['-m', HCFLOW_WEIGHTS, '--seed', '0'])
+                               ['-m', HCFLOW_WEIGHTS, '--eps-std', '0'])
 
 def _sr_decode_png(image_bin):
     try:
@@ -628,7 +632,7 @@ def register_provider(register, get_config):
                 'HAT x4 (fast)': 'the small model: fast, and the one to reach for',
                 'HAT x4': 'the base model',
                 'HAT x4 (best)': 'the large model: slowest, and the best',
-                'HCFlow x4': 'a conditional flow, so it synthesises texture rather than smoothing it',
+                'HCFlow x4': 'a conditional flow; the deterministic mean of its samples',
             },
             'default': 'RealESRGAN x2plus'
         }

@@ -837,6 +837,8 @@ export const pixeldeckEditor = {
 				<select v-else-if="field.type === 'enum'" class="modal-select" v-model="options[key]">
 					<option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
 				</select>
+				<input v-else-if="field.type === 'number'" class="modal-number" type="number" v-model="options[key]" :min="field.min" :max="field.max" :step="field.step" :placeholder="field.placeholder">
+				<div v-if="field.description" class="modal-hint">{{ field.description }}</div>
 			</template>
 		</div>
 		<button class="modal-go" :disabled="busy" @click="paneGo">Go</button>

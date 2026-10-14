@@ -563,18 +563,19 @@ async def go_local(request, post, deliver_bin_image):
         bin_image = await loop.run_in_executor(None, run_hcflow, image_bin)
         await deliver_bin_image(bin_image)
         return
-    if post['model'] in (
-        'Exposure Fusion',
-        'Exposure Fusion Knee 0.95',
-        'Exposure Fusion Knee 0.2',
-        'Adaptive Enhancement',
-    ):
-        model_args = {
-            'Exposure Fusion': [],
-            'Exposure Fusion Knee 0.95': ['-k', '0.95'],
-            'Exposure Fusion Knee 0.2': ['-k', '0.2'],
-            'Adaptive Enhancement': ['--adaptive'],
-        }[post['model']]
+    if post['model'] in ('Exposure Fusion', 'Adaptive Enhancement'):
+        if post['model'] == 'Exposure Fusion':
+            knee = (post.get('knee') or '').strip() or None
+            if knee is not None:
+                try:
+                    value = float(knee)
+                except ValueError:
+                    raise web.HTTPBadRequest(text='Knee must be a number from 0 up to (but not including) 1.')
+                if not 0 <= value < 1:
+                    raise web.HTTPBadRequest(text='Knee must be a number from 0 up to (but not including) 1.')
+            model_args = ['-k', knee] if knee is not None else []
+        else:
+            model_args = ['--adaptive']
         image_bin = post['image'].file.read()
         loop = asyncio.get_event_loop()
         bin_image = await loop.run_in_executor(None, run_adaptive_enhance, image_bin, model_args)
@@ -649,14 +650,24 @@ def register_provider(register, get_config):
         'model': {
             'options': [
                 'Exposure Fusion',
-                'Exposure Fusion Knee 0.95',
-                'Exposure Fusion Knee 0.2',
                 'Adaptive Enhancement',
                 'White Balance',
                 'White Balance (No Clip)',
                 'Gamma Correction',
             ],
             'default': 'Exposure Fusion',
+        },
+        'knee': {
+            'type': 'number',
+            'default': '',
+            'models': ['Exposure Fusion'],
+            'min': 0,
+            'max': 1,
+            'step': 'any',
+            'placeholder': 'auto',
+            'description': 'Leave empty for the original default (automatic knee). '
+                           'Use 0.95 for a lighter subject or 0.2 for a dark subject. '
+                           'Custom knees can be from 0 up to (but not including) 1.',
         },
     })(handler)
 
